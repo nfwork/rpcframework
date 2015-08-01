@@ -5,17 +5,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.gomo.rpcframework.core.RPCConfig;
 import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.util.ByteUtil;
 
 public class Connection {
 
-	Socket socket;
-	OutputStream outputStream;
-	InputStream inputStream;
-	String host;
-	int port;
+	private Socket socket;
+	private OutputStream outputStream;
+	private InputStream inputStream;
+	private String host;
+	private int port;
+	private Log log = LogFactory.getLog(getClass());
 
 	public Connection(String host, int port) {
 		this.host = host;
@@ -29,7 +33,7 @@ public class Connection {
 			outputStream = socket.getOutputStream();
 			inputStream = socket.getInputStream();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("connection init failed", e);
 		}
 	}
 
