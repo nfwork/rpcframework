@@ -56,7 +56,7 @@ public class Connection {
 			index = inputStream.read(blenght);
 
 			if (index != 4) {
-				System.err.println("not found length flag  with 4 byte");
+				throw new DatagramFormatException("not found length flag  with 4 byte");
 			}
 
 			int responseLength = ByteUtil.toInt(blenght);
@@ -73,15 +73,21 @@ public class Connection {
 
 	public void close() {
 		try {
-			outputStream.close();
+			if (outputStream!=null) {
+				outputStream.close();
+			}
 		} catch (Exception e) {
 		}
 		try {
-			inputStream.close();
+			if (inputStream!=null) {
+				inputStream.close();
+			}
 		} catch (Exception e) {
 		}
 		try {
-			socket.close();
+			if (socket!=null) {
+				socket.close();
+			}
 		} catch (Exception e) {
 		}
 	}
