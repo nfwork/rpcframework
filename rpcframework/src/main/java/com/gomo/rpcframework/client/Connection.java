@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import com.gomo.rpcframework.core.RPCConfig;
+import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.util.ByteUtil;
 
 public class Connection {
@@ -58,7 +59,7 @@ public class Connection {
 			byte pkg[] = new byte[responseLength];
 			index = inputStream.read(pkg);
 			if (index != responseLength) {
-				System.err.println("长度不匹配" + new String(pkg, 0, index));
+				throw new DatagramFormatException(String.format("Datagram length it doesnot match,length:%s position:%s", responseLength, index));
 			}
 			return new String(pkg, 0, index);
 		} catch (IOException e) {
