@@ -1,5 +1,7 @@
 package com.gomo.rpcframework.client;
 
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,20 +18,20 @@ public class Client {
 	private int connectionNum = 10; // 链接数量
 
 	private int soTimeout = 30; // 链接超时 单位秒
-	
-	private int status = 0; //0初始状态 1已初始化 2 已销毁
+
+	private int status = 0; // 0初始状态 1已初始化 2 已销毁
 
 	public Client() {
 
 	}
 
 	public synchronized void init() {
-		if (status!=0) {
+		if (status != 0) {
 			throw new RuntimeException("client has inited");
-		}else {
+		} else {
 			status = 1;
 		}
-		
+
 		String[] hosts = servers.split(",");
 		connectionQueue = new LinkedBlockingQueue<Connection>();
 		for (int i = 0; i < connectionNum; i++) {
@@ -46,9 +48,9 @@ public class Client {
 	}
 
 	public synchronized void destory() {
-		if (status!=1) {
+		if (status != 1) {
 			throw new RuntimeException("client is not init or aready destory");
-		}else {
+		} else {
 			status = 2;
 		}
 		if (connectionQueue != null) {
@@ -80,17 +82,19 @@ public class Client {
 		}
 	}
 
-	public Response call(Request request) {
-		if (request==null || request.getServiceName() ==null) {
+	public Response call(Request request) throws IOException {
+		if (request == null || request.getServiceName() == null) {
 			throw new RuntimeException("request or request servciename cannot be null");
 		}
-		if (status!=1) {
+		if (status != 1) {
 			throw new RuntimeException("client is not init or aready destory");
 		}
 		Connection connection = null;
 		try {
 			connection = getConnection();
 			return connection.call(request);
+		} catch (SocketTimeoutException e) {
+			throw e;
 		} catch (Exception e) {
 			connection.refresh();
 			return connection.call(request);

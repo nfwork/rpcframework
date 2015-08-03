@@ -44,36 +44,33 @@ public class Connection {
 		init();
 	}
 
-	public Response call(Request request) {
-		try {
-			Gson gson = new Gson();
-			String data = new Gson().toJson(request);
-			byte[] dataByte = data.getBytes(RPCConfig.ENCODE);
-			outputStream.write(RPCConfig.FLAG);
-			outputStream.write(ByteUtil.toByteArray(dataByte.length));
-			outputStream.write(dataByte);
-			outputStream.flush();
+	public Response call(Request request) throws IOException {
 
-			int index = 0;
-			byte blenght[] = new byte[4];
+		Gson gson = new Gson();
+		String data = new Gson().toJson(request);
+		byte[] dataByte = data.getBytes(RPCConfig.ENCODE);
+		outputStream.write(RPCConfig.FLAG);
+		outputStream.write(ByteUtil.toByteArray(dataByte.length));
+		outputStream.write(dataByte);
+		outputStream.flush();
 
-			index = inputStream.read(blenght);
-			do {
-				index = index + inputStream.read(blenght, index, (4 - index));
-			} while (index != 4);
+		int index = 0;
+		byte blenght[] = new byte[4];
 
-			int responseLength = ByteUtil.toInt(blenght);
-			index = 0;
-			byte pkg[] = new byte[responseLength];
-			do {
-				index = index + inputStream.read(pkg, index, (responseLength - index));
-			} while (index != responseLength);
+		index = inputStream.read(blenght);
+		do {
+			index = index + inputStream.read(blenght, index, (4 - index));
+		} while (index != 4);
 
-			String resData = new String(pkg, 0, index, RPCConfig.ENCODE);
-			return gson.fromJson(resData, Response.class);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		int responseLength = ByteUtil.toInt(blenght);
+		index = 0;
+		byte pkg[] = new byte[responseLength];
+		do {
+			index = index + inputStream.read(pkg, index, (responseLength - index));
+		} while (index != responseLength);
+
+		String resData = new String(pkg, 0, index, RPCConfig.ENCODE);
+		return gson.fromJson(resData, Response.class);
 	}
 
 	public void close() {
