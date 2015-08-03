@@ -16,12 +16,20 @@ public class Client {
 	private int connectionNum = 10; // 链接数量
 
 	private int soTimeout = 30; // 链接超时 单位秒
+	
+	private int status = 0; //0初始状态 1已初始化 2 已销毁
 
 	public Client() {
 
 	}
 
-	public void init() {
+	public synchronized void init() {
+		if (status!=0) {
+			throw new RuntimeException("client has inited");
+		}else {
+			status = 1;
+		}
+		
 		String[] hosts = servers.split(",");
 		connectionQueue = new LinkedBlockingQueue<Connection>();
 		for (int i = 0; i < connectionNum; i++) {
@@ -37,7 +45,12 @@ public class Client {
 		}
 	}
 
-	public void destory() {
+	public synchronized void destory() {
+		if (status!=1) {
+			throw new RuntimeException("client is not init or aready destory");
+		}else {
+			status = 2;
+		}
 		if (connectionQueue != null) {
 			for (Connection connection : connectionQueue) {
 				connection.close();
@@ -68,6 +81,9 @@ public class Client {
 	}
 
 	public Response call(Request request) {
+		if (status!=1) {
+			throw new RuntimeException("client is not init or aready destory");
+		}
 		Connection connection = null;
 		try {
 			connection = getConnection();
