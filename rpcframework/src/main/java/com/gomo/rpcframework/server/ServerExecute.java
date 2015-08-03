@@ -8,6 +8,7 @@ import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.ByteUtil;
+import com.gomo.rpcframework.util.RPCLog;
 
 public class ServerExecute implements Runnable {
 
@@ -77,7 +78,7 @@ public class ServerExecute implements Runnable {
 			channel.write(ByteBuffer.wrap(outputByte));
 		} catch (Exception e) {
 			key.cancel();
-			e.printStackTrace();
+			RPCLog.error("server execute run error", e);
 		}
 	}
 

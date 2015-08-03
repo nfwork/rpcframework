@@ -11,10 +11,8 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.gomo.rpcframework.exception.NoDataException;
+import com.gomo.rpcframework.util.RPCLog;
 
 public class Server implements Runnable {
 
@@ -24,7 +22,6 @@ public class Server implements Runnable {
 	private Selector selector;
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle = new ServiceHandle();
-	private Log log = LogFactory.getLog(getClass());
 
 	public Server() {
 	}
@@ -45,9 +42,9 @@ public class Server implements Runnable {
 			this.serversocket.socket().bind(new InetSocketAddress(port));
 			this.serversocket.register(this.selector, SelectionKey.OP_ACCEPT);
 			new Thread(this).start();
-			log.info("server started service on port:" + port);
+			RPCLog.info("server started service on port:" + port);
 		} catch (Exception e) {
-			log.error("server start error", e);
+			RPCLog.error("server start error", e);
 		}
 	}
 
@@ -100,7 +97,7 @@ public class Server implements Runnable {
 						key.channel().close();
 					} catch (IOException e1) {
 					}
-					log.error("server runtime excetion", e);
+					RPCLog.error("server runtime excetion", e);
 				}
 			}
 		}

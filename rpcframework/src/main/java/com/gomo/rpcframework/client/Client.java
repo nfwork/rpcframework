@@ -3,11 +3,9 @@ package com.gomo.rpcframework.client;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
+import com.gomo.rpcframework.util.RPCLog;
 
 public class Client {
 
@@ -18,8 +16,6 @@ public class Client {
 	private int connectionNum = 10; // 链接数量
 
 	private int soTimeout = 30; // 链接超时 单位秒
-
-	private Log log = LogFactory.getLog(getClass());
 
 	public Client() {
 
@@ -36,7 +32,7 @@ public class Client {
 				Connection connection = new Connection(ce[0], Integer.parseInt(ce[1]), soTimeout);
 				connectionQueue.put(connection);
 			} catch (Exception e) {
-				log.error("create client faild", e);
+				RPCLog.error("create client faild", e);
 			}
 		}
 	}
@@ -54,7 +50,7 @@ public class Client {
 		try {
 			return connectionQueue.take();
 		} catch (Exception e) {
-			log.error("take connection faild", e);
+			RPCLog.error("take connection faild", e);
 		}
 		return null;
 	}
@@ -67,7 +63,7 @@ public class Client {
 				connectionQueue.put(connection);
 			}
 		} catch (InterruptedException e) {
-			log.error("return connection faild", e);
+			RPCLog.error("return connection faild", e);
 		}
 	}
 

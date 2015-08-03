@@ -3,18 +3,14 @@ package com.gomo.rpcframework.server;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
+import com.gomo.rpcframework.util.RPCLog;
 import com.google.gson.Gson;
 
 public class ServiceHandle {
 
 	Map<String, Service> serviceMap = new HashMap<String, Service>();
-
-	private Log log = LogFactory.getLog(getClass());
 
 	public void regist(String name, Service service) {
 		serviceMap.put(name, service);
@@ -39,7 +35,7 @@ public class ServiceHandle {
 				}
 			}
 		} catch (Exception e) {
-			log.error("service handle run error", e);
+			RPCLog.error("service handle run error", e);
 			response = new Response();
 			response.setSuccess(false);
 			response.setContent(e.getMessage());

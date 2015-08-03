@@ -5,14 +5,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.util.ByteUtil;
+import com.gomo.rpcframework.util.RPCLog;
 import com.google.gson.Gson;
 
 public class Connection {
@@ -23,7 +21,6 @@ public class Connection {
 	private String host;
 	private int port;
 	private int soTimeout = 30;
-	private Log log = LogFactory.getLog(getClass());
 
 	public Connection(String host, int port, int soTimeout) {
 		this.host = host;
@@ -39,7 +36,7 @@ public class Connection {
 			outputStream = socket.getOutputStream();
 			inputStream = socket.getInputStream();
 		} catch (Exception e) {
-			log.error("connection init failed", e);
+			RPCLog.error("connection init failed", e);
 		}
 	}
 
