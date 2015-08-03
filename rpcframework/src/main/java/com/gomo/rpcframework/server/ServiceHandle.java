@@ -22,18 +22,25 @@ public class ServiceHandle {
 
 	public String handle(String inputParam) {
 		Gson gson = new Gson();
-		Response response = new Response();
+		Response response;
 		try {
 			Request request = gson.fromJson(inputParam, Request.class);
 			Service service = serviceMap.get(request.getServiceName());
 			if (service == null) {
+				response = new Response();
 				response.setContent("service " + request.getServiceName() + " not found");
 				response.setSuccess(false);
 			} else {
 				response = service.service(request);
+				if (response==null) {
+					response = new Response();
+					response.setContent("service return null");
+					response.setSuccess(false);
+				}
 			}
 		} catch (Exception e) {
 			log.error("service handle run error", e);
+			response = new Response();
 			response.setSuccess(false);
 			response.setContent(e.getMessage());
 		}
