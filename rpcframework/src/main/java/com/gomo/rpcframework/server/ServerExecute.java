@@ -66,9 +66,13 @@ public class ServerExecute implements Runnable {
 			SocketChannel channel = (SocketChannel) key.channel();
 			String output = serviceHandle.handle(inputParam);
 			byte[] outputByte = output.getBytes(RPCConfig.ENCODE);
-			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
+			int  outputLength = outputByte.length;
+			byte[] lengthByte = ByteUtil.toByteArray(outputLength);
 			channel.write(ByteBuffer.wrap(lengthByte));
-			channel.write(ByteBuffer.wrap(outputByte));
+			int sendNum = 0;
+			do{
+				sendNum = sendNum+channel.write(ByteBuffer.wrap(outputByte,sendNum,(outputLength-sendNum)));
+			}while(sendNum<outputLength);
 		} catch (Exception e) {
 			key.cancel();
 			RPCLog.error("server execute run error", e);

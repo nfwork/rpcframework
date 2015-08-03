@@ -39,7 +39,7 @@ public class Client {
 				int index = i % hosts.length;
 				String server = hosts[index].trim();
 				String ce[] = server.split(":");
-				Connection connection = new Connection(ce[0], Integer.parseInt(ce[1]), soTimeout);
+				Connection connection = new NioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
 				connectionQueue.put(connection);
 			} catch (Exception e) {
 				RPCLog.error("create client faild", e);
