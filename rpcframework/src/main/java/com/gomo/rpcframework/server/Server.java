@@ -41,7 +41,9 @@ public class Server implements Runnable {
 			this.serversocket.configureBlocking(false);
 			this.serversocket.socket().bind(new InetSocketAddress(port));
 			this.serversocket.register(this.selector, SelectionKey.OP_ACCEPT);
-			new Thread(this).start();
+			Thread thread = new Thread(this);
+			thread.setName("RPCServer");
+			thread.start();
 			RPCLog.info("server started service on port:" + port);
 		} catch (Exception e) {
 			RPCLog.error("server start error", e);
