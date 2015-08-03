@@ -15,7 +15,9 @@ public class AdvClientTest {
 		Client client = null;
 		try {
 			client = new Client();
-			client.setServers("192.168.2.184:9099");
+			//client.setServers("192.168.2.184:8090");
+			client.setServers("127.0.0.1:8090");
+			client.setConnectionNum(10);
 			client.init();
 			
 			int i=0;
@@ -33,7 +35,7 @@ public class AdvClientTest {
 				
 				Request request = new Request();
 				request.setContent(new Gson().toJson(pheadMap));
-				request.setServiceName("advService");
+				request.setServiceName("AdvRpcService");
 				Response response = client.call(request);
 				
 				long end = System.currentTimeMillis();

@@ -47,9 +47,6 @@ public class ServerExecute implements Runnable {
 				throw new NoDataException();
 			}
 		} while (lengthBuf.position() < 4);
-		if (index != 4) {
-			throw new DatagramFormatException("not found length flag  with 4 byte");
-		}
 		int length = ByteUtil.toInt(lengthBuf.array());
 
 		
@@ -61,10 +58,6 @@ public class ServerExecute implements Runnable {
 				throw new NoDataException();
 			}
 		} while (dataBuf.position() < length);
-
-		if (length != dataBuf.position()) {
-			throw new DatagramFormatException(String.format("Datagram length it doesnot match,length:%s position:%s", length, dataBuf.limit()));
-		}
 		inputParam = new String(dataBuf.array(), RPCConfig.ENCODE);
 	}
 

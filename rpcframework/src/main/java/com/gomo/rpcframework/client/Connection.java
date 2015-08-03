@@ -8,7 +8,6 @@ import java.net.Socket;
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
-import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCLog;
 import com.google.gson.Gson;
@@ -55,22 +54,22 @@ public class Connection {
 			outputStream.write(dataByte);
 			outputStream.flush();
 
-			int index;
+			int index = 0;
 			byte blenght[] = new byte[4];
 
 			index = inputStream.read(blenght);
-
-			if (index != 4) {
-				throw new DatagramFormatException("not found length flag  with 4 byte");
-			}
+			do {
+				index = index + inputStream.read(blenght, index, (4 - index));
+			} while (index != 4);
 
 			int responseLength = ByteUtil.toInt(blenght);
+			index = 0;
 			byte pkg[] = new byte[responseLength];
-			index = inputStream.read(pkg);
-			if (index != responseLength) {
-				throw new DatagramFormatException(String.format("Datagram length it doesnot match,length:%s position:%s", responseLength, index));
-			}
-			String resData= new String(pkg, 0, index, RPCConfig.ENCODE);
+			do {
+				index = index + inputStream.read(pkg, index, (responseLength - index));
+			} while (index != responseLength);
+
+			String resData = new String(pkg, 0, index, RPCConfig.ENCODE);
 			return gson.fromJson(resData, Response.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
