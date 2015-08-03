@@ -6,33 +6,34 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.gomo.rpcframework.Request;
+import com.gomo.rpcframework.Response;
+
 public class Client {
 
 	private BlockingQueue<Connection> connectionQueue;
-	
-	private String host = "127.0.0.1";
-	
-	private int port = 808;
-	
-	private int connectionSize = 10;
-	
+
+	private String servers = "127.0.0.1:8090"; // 服务地址
+
+	private int connectionNum = 10; // 链接数量
+
+	private int soTimeout = 30; // 链接超时 单位秒
+
 	private Log log = LogFactory.getLog(getClass());
 
-	public Client(String host, int port, int connectionSize) {
-		this.host = host;
-		this.port = port;
-		this.connectionSize = connectionSize;
+	public Client() {
+
 	}
-	
-	public Client(){
-		
-	}
-	
-	public void init(){
+
+	public void init() {
+		String[] hosts = servers.split(",");
 		connectionQueue = new LinkedBlockingQueue<Connection>();
-		for (int i = 0; i < connectionSize; i++) {
-			Connection connection = new Connection(host, port);
+		for (int i = 0; i < connectionNum; i++) {
 			try {
+				int index = i % hosts.length;
+				String server = hosts[index].trim();
+				String ce[] = server.split(":");
+				Connection connection = new Connection(ce[0], Integer.parseInt(ce[1]), soTimeout);
 				connectionQueue.put(connection);
 			} catch (Exception e) {
 				log.error("create client faild", e);
@@ -62,7 +63,7 @@ public class Client {
 		try {
 			if (connectionQueue == null) {
 				connection.close();
-			}else {
+			} else {
 				connectionQueue.put(connection);
 			}
 		} catch (InterruptedException e) {
@@ -70,43 +71,43 @@ public class Client {
 		}
 	}
 
-	public String call(String param) {
+	public Response call(Request request) {
 		Connection connection = null;
 		try {
 			connection = getConnection();
-			return connection.call(param);
-		}catch(Exception e){
+			return connection.call(request);
+		} catch (Exception e) {
 			connection.refresh();
-			return connection.call(param);
-		}finally {
+			return connection.call(request);
+		} finally {
 			if (connection != null) {
 				returnConnection(connection);
 			}
 		}
 	}
 
-	public String getHost() {
-		return host;
+	public String getServers() {
+		return servers;
 	}
 
-	public void setHost(String host) {
-		this.host = host;
+	public void setServers(String servers) {
+		this.servers = servers;
 	}
 
-	public int getPort() {
-		return port;
+	public int getConnectionNum() {
+		return connectionNum;
 	}
 
-	public void setPort(int port) {
-		this.port = port;
+	public void setConnectionNum(int connectionNum) {
+		this.connectionNum = connectionNum;
 	}
 
-	public int getConnectionSize() {
-		return connectionSize;
+	public int getSoTimeout() {
+		return soTimeout;
 	}
 
-	public void setConnectionSize(int connectionSize) {
-		this.connectionSize = connectionSize;
+	public void setSoTimeout(int soTimeout) {
+		this.soTimeout = soTimeout;
 	}
-	
+
 }

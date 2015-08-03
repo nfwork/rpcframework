@@ -18,17 +18,19 @@ import com.gomo.rpcframework.exception.NoDataException;
 
 public class Server implements Runnable {
 
-	private int port;
+	private int port=8090;
+	private int workNum=10;
 	private ServerSocketChannel serversocket;
 	private Selector selector;
-	private Service service;
 	private ExecutorService executorService;
+	private ServiceHandle serviceHandle = new ServiceHandle();
 	private Log log = LogFactory.getLog(getClass());
 
-	public Server(Service service, int port, int workNum) {
-		this.service = service;
-		this.port = port;
-		executorService = Executors.newFixedThreadPool(workNum);
+	public Server() {
+	}
+	
+	public void registService(String serviceName,Service service){
+		serviceHandle.regist(serviceName, service);
 	}
 
 	/**
@@ -36,13 +38,14 @@ public class Server implements Runnable {
 	 * */
 	public void start() {
 		try {
+			executorService = Executors.newFixedThreadPool(workNum);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
 			this.serversocket.configureBlocking(false);
 			this.serversocket.socket().bind(new InetSocketAddress(port));
 			this.serversocket.register(this.selector, SelectionKey.OP_ACCEPT);
 			new Thread(this).start();
-			System.out.println("server started service on port:" + port);
+			log.info("server started service on port:" + port);
 		} catch (Exception e) {
 			log.error("server start error", e);
 		}
@@ -57,7 +60,7 @@ public class Server implements Runnable {
 		ServerSocketChannel server = (ServerSocketChannel) key.channel();
 		SocketChannel clientchannel = server.accept();
 		clientchannel.configureBlocking(false);
-		ServerExecute serverExecute = new ServerExecute(service);
+		ServerExecute serverExecute = new ServerExecute(serviceHandle);
 		clientchannel.register(this.selector, SelectionKey.OP_READ, serverExecute);
 	}
 
@@ -102,4 +105,21 @@ public class Server implements Runnable {
 			}
 		}
 	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public int getWorkNum() {
+		return workNum;
+	}
+
+	public void setWorkNum(int workNum) {
+		this.workNum = workNum;
+	}
+	
 }

@@ -1,5 +1,7 @@
 package sockettest;
 
+import com.gomo.rpcframework.Request;
+import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.client.Client;
 
 public class ClientTest {
@@ -8,20 +10,24 @@ public class ClientTest {
 
 	public static void main(String[] args) throws Exception {
 
-		final Client client = new Client("127.0.0.1", 808, 10);
+		final Client client = new Client();
+		client.setServers("127.0.0.1:8090");
 		client.init();
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 10; i++) {
 			new Thread() {
 				public void run() {
 					try {
 						for (int i = 0; i < 1000; i++) {
 							try {
-								Thread.sleep(1000);
+								Thread.sleep(10);
 								long begin = System.currentTimeMillis();
-								String response = client.call(("hello world " + i));
+								Request request = new Request();
+								request.setServiceName("helloService");
+								request.setContent("hello world " + i);
+								Response response = client.call(request);
 								long end = System.currentTimeMillis();
-								System.err.println("cost time:" + (end - begin) + ",content:" + response);
+								System.err.println("cost time:" + (end - begin) + ",content:" + response.getContent());
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

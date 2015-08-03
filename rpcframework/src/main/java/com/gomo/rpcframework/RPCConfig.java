@@ -1,4 +1,4 @@
-package com.gomo.rpcframework.core;
+package com.gomo.rpcframework;
 
 public class RPCConfig {
 

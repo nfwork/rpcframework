@@ -8,9 +8,12 @@ import java.net.Socket;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gomo.rpcframework.core.RPCConfig;
+import com.gomo.rpcframework.RPCConfig;
+import com.gomo.rpcframework.Request;
+import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.util.ByteUtil;
+import com.google.gson.Gson;
 
 public class Connection {
 
@@ -19,17 +22,20 @@ public class Connection {
 	private InputStream inputStream;
 	private String host;
 	private int port;
+	private int soTimeout = 30;
 	private Log log = LogFactory.getLog(getClass());
 
-	public Connection(String host, int port) {
+	public Connection(String host, int port, int soTimeout) {
 		this.host = host;
 		this.port = port;
+		this.soTimeout = soTimeout;
 		init();
 	}
 
 	private void init() {
 		try {
 			socket = new Socket(host, port);
+			socket.setSoTimeout(soTimeout * 1000);
 			outputStream = socket.getOutputStream();
 			inputStream = socket.getInputStream();
 		} catch (Exception e) {
@@ -42,8 +48,10 @@ public class Connection {
 		init();
 	}
 
-	public String call(String data) {
+	public Response call(Request request) {
 		try {
+			Gson gson = new Gson();
+			String data = new Gson().toJson(request);
 			byte[] dataByte = data.getBytes(RPCConfig.ENCODE);
 			outputStream.write(RPCConfig.FLAG);
 			outputStream.write(ByteUtil.toByteArray(dataByte.length));
@@ -65,7 +73,8 @@ public class Connection {
 			if (index != responseLength) {
 				throw new DatagramFormatException(String.format("Datagram length it doesnot match,length:%s position:%s", responseLength, index));
 			}
-			return new String(pkg, 0, index);
+			String resData= new String(pkg, 0, index, RPCConfig.ENCODE);
+			return gson.fromJson(resData, Response.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -73,19 +82,19 @@ public class Connection {
 
 	public void close() {
 		try {
-			if (outputStream!=null) {
+			if (outputStream != null) {
 				outputStream.close();
 			}
 		} catch (Exception e) {
 		}
 		try {
-			if (inputStream!=null) {
+			if (inputStream != null) {
 				inputStream.close();
 			}
 		} catch (Exception e) {
 		}
 		try {
-			if (socket!=null) {
+			if (socket != null) {
 				socket.close();
 			}
 		} catch (Exception e) {

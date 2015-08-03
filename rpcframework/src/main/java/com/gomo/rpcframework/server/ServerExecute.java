@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import com.gomo.rpcframework.core.RPCConfig;
+import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.exception.DatagramFormatException;
 import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.ByteUtil;
@@ -12,14 +12,14 @@ import com.gomo.rpcframework.util.ByteUtil;
 public class ServerExecute implements Runnable {
 
 	private SelectionKey key;
-	private Service service;
 	private ByteBuffer dataBuf;
 	private ByteBuffer falgBuf = ByteBuffer.allocate(1);
 	private ByteBuffer lengthBuf = ByteBuffer.allocate(4);
 	private String inputParam;
+	private ServiceHandle serviceHandle;
 
-	public ServerExecute(Service service) {
-		this.service = service;
+	public ServerExecute(ServiceHandle serviceHandle) {
+		this.serviceHandle = serviceHandle;
 	}
 
 	public void read() throws Exception {
@@ -70,7 +70,7 @@ public class ServerExecute implements Runnable {
 	public void run() {
 		try {
 			SocketChannel channel = (SocketChannel) key.channel();
-			String output = service.service(inputParam);
+			String output = serviceHandle.handle(inputParam);
 			byte[] outputByte = output.getBytes(RPCConfig.ENCODE);
 			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
 			channel.write(ByteBuffer.wrap(lengthByte));
@@ -87,14 +87,6 @@ public class ServerExecute implements Runnable {
 
 	public void setKey(SelectionKey key) {
 		this.key = key;
-	}
-
-	public Service getService() {
-		return service;
-	}
-
-	public void setService(Service service) {
-		this.service = service;
 	}
 
 }
