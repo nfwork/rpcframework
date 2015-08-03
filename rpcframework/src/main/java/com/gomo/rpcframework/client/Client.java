@@ -81,6 +81,9 @@ public class Client {
 	}
 
 	public Response call(Request request) {
+		if (request==null || request.getServiceName() ==null) {
+			throw new RuntimeException("request or request servciename cannot be null");
+		}
 		if (status!=1) {
 			throw new RuntimeException("client is not init or aready destory");
 		}
