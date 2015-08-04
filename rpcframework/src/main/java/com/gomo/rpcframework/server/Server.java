@@ -67,8 +67,8 @@ public class Server implements Runnable {
 		while (true) {
 			try {
 				this.selector.select();
-			} catch (IOException e1) {
-				e1.printStackTrace();
+			} catch (IOException e) {
+				RPCLog.error("server select error", e);
 			}
 			// 返回此选择器的已选择键集
 			Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();

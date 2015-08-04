@@ -47,9 +47,8 @@ public class BioConnection implements Connection {
 	public Response call(Request request) throws IOException {
 
 		byte[] dataByte = RPCEncode.encodeRequest(request);
-		outputStream.write(RPCConfig.FLAG);
-		outputStream.write(ByteUtil.toByteArray(dataByte.length));
-		outputStream.write(dataByte);
+		byte data[] = ByteUtil.concatAll(new byte[] { RPCConfig.FLAG }, ByteUtil.toByteArray(dataByte.length), dataByte);
+		outputStream.write(data);
 		outputStream.flush();
 
 		int index = 0;

@@ -25,7 +25,6 @@ public class ServerExecute implements Runnable {
 	public void read() throws Exception {
 		SocketChannel channel = (SocketChannel) key.channel();
 		int index;
-
 		// 协议标识 校验合法性
 		falgBuf.clear();
 		do {
@@ -47,7 +46,7 @@ public class ServerExecute implements Runnable {
 			}
 		} while (lengthBuf.position() < 4);
 		int length = ByteUtil.toInt(lengthBuf.array());
-		
+
 		// 报文内容读取
 		dataBuf = ByteBuffer.allocate(length);
 		do {
@@ -62,13 +61,24 @@ public class ServerExecute implements Runnable {
 		try {
 			SocketChannel channel = (SocketChannel) key.channel();
 			byte[] outputByte = serviceHandle.handle(dataBuf.array());
-			int  outputLength = outputByte.length;
-			byte[] lengthByte = ByteUtil.toByteArray(outputLength);
-			channel.write(ByteBuffer.wrap(lengthByte));
-			int sendNum = 0;
-			do{
-				sendNum = sendNum+channel.write(ByteBuffer.wrap(outputByte,sendNum,(outputLength-sendNum)));
-			}while(sendNum<outputLength);
+			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
+			byte[] data = ByteUtil.concatAll(lengthByte, outputByte);
+
+			int dataLength = data.length;
+			int sendTotalNum = 0;
+			do {
+				ByteBuffer byteBuffer = ByteBuffer.wrap(data, sendTotalNum, (dataLength - sendTotalNum));
+				int sendNum = 0;
+				do {
+					sendNum = channel.write(byteBuffer);
+					if (sendNum == 0) {
+						Thread.sleep(1);
+					} else {
+						break;
+					}
+				} while (true);
+				sendTotalNum += sendNum;
+			} while (sendTotalNum < dataLength);
 		} catch (Exception e) {
 			key.cancel();
 			RPCLog.error("server execute run error", e);

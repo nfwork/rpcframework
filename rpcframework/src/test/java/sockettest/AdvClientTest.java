@@ -15,13 +15,14 @@ public class AdvClientTest {
 		Client client = null;
 		try {
 			client = new Client();
-			//client.setServers("192.168.2.184:8090");
-			client.setServers("127.0.0.1:8090");
+			client.setServers("192.168.2.184:8090");
+			//client.setServers("127.0.0.1:8090");
 			client.setConnectionNum(10);
+			client.setIoMode(Client.NIO);
 			client.init();
 			
 			int i=0;
-			while (i++<10000) {
+			while (i++<100) {
 				long begin = System.currentTimeMillis();
 				Map<String, Object> pheadMap = new HashMap<String, Object>();
 				pheadMap.put("advposids", 298);
@@ -40,7 +41,6 @@ public class AdvClientTest {
 				
 				long end = System.currentTimeMillis();
 				System.err.println("cost time:"+(end-begin)+", content:"+response.getContent().substring(0,300));
-				Thread.sleep(10);
 			}
 		}finally{
 			if (client!=null) {

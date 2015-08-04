@@ -14,7 +14,7 @@ import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
 
-public class NioConnection implements Connection{
+public class NioConnection implements Connection {
 
 	// 创建缓冲区
 	private ByteBuffer lengthBuf = ByteBuffer.allocate(4);
@@ -34,7 +34,7 @@ public class NioConnection implements Connection{
 		try {
 			InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
 			socketChannel = SocketChannel.open();
-			socketChannel.socket().setSoTimeout(soTimeout*1000);
+			socketChannel.socket().setSoTimeout(soTimeout * 1000);
 			socketChannel.connect(address);
 		} catch (Exception e) {
 			RPCLog.error("connection init failed", e);
@@ -48,16 +48,16 @@ public class NioConnection implements Connection{
 
 	public Response call(Request request) throws IOException {
 
-		//发送请求
+		// 发送请求
 		byte[] dataByte = RPCEncode.encodeRequest(request);
-		socketChannel.write(ByteBuffer.wrap(new byte[] { RPCConfig.FLAG }));
-		int  outputLength = dataByte.length;
-		socketChannel.write(ByteBuffer.wrap(ByteUtil.toByteArray(outputLength)));
+
+		byte data[] = ByteUtil.concatAll(new byte[] { RPCConfig.FLAG }, ByteUtil.toByteArray(dataByte.length), dataByte);
+		int dataLength = data.length;
 		int sendNum = 0;
-		do{
-			sendNum = sendNum+socketChannel.write(ByteBuffer.wrap(dataByte,sendNum,(outputLength-sendNum)));
-		}while(sendNum<outputLength);
-		
+		do {
+			sendNum = sendNum + socketChannel.write(ByteBuffer.wrap(data, sendNum, (dataLength - sendNum)));
+		} while (sendNum < dataLength);
+
 		// 读取报文长度
 		int index = 0;
 		lengthBuf.clear();
@@ -77,7 +77,7 @@ public class NioConnection implements Connection{
 				throw new NoDataException();
 			}
 		} while (dataBuf.position() < length);
-		
+
 		return RPCEncode.decodeResponse(dataBuf.array());
 	}
 
