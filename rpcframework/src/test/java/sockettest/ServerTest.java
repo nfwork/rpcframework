@@ -20,6 +20,7 @@ class HelloService implements Service {
 	public Response service(Request request) {
 		System.err.println(request.getContent());
 		Response response = new Response();
+		response.setSuccess(true);
 		response.setContent("已经收到,消息内容:" + request.getContent());
 		return response;
 	}
