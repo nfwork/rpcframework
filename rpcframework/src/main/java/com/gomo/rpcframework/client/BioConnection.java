@@ -9,8 +9,8 @@ import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.util.ByteUtil;
+import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
-import com.google.gson.Gson;
 
 public class BioConnection implements Connection {
 
@@ -46,9 +46,7 @@ public class BioConnection implements Connection {
 
 	public Response call(Request request) throws IOException {
 
-		Gson gson = new Gson();
-		String data = new Gson().toJson(request);
-		byte[] dataByte = data.getBytes(RPCConfig.ENCODE);
+		byte[] dataByte = RPCEncode.encodeRequest(request);
 		outputStream.write(RPCConfig.FLAG);
 		outputStream.write(ByteUtil.toByteArray(dataByte.length));
 		outputStream.write(dataByte);
@@ -69,8 +67,7 @@ public class BioConnection implements Connection {
 			index = index + inputStream.read(pkg, index, (responseLength - index));
 		} while (index != responseLength);
 
-		String resData = new String(pkg, 0, index, RPCConfig.ENCODE);
-		return gson.fromJson(resData, Response.class);
+		return RPCEncode.decodeResponse(pkg);
 	}
 
 	public void close() {

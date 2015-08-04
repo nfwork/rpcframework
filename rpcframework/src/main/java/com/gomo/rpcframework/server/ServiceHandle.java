@@ -1,12 +1,13 @@
 package com.gomo.rpcframework.server;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
+import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
-import com.google.gson.Gson;
 
 public class ServiceHandle {
 
@@ -16,11 +17,10 @@ public class ServiceHandle {
 		serviceMap.put(name, service);
 	}
 
-	public String handle(String inputParam) {
-		Gson gson = new Gson();
+	public byte[] handle(byte[] requestData) throws IOException{
 		Response response;
 		try {
-			Request request = gson.fromJson(inputParam, Request.class);
+			Request request = RPCEncode.decodeRequest(requestData);
 			Service service = serviceMap.get(request.getServiceName());
 			if (service == null) {
 				response = new Response();
@@ -40,6 +40,6 @@ public class ServiceHandle {
 			response.setSuccess(false);
 			response.setContent(e.getMessage());
 		}
-		return gson.toJson(response);
+		return RPCEncode.encodeResponse(response);
 	}
 }

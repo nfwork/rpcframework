@@ -1,0 +1,60 @@
+package com.gomo.rpcframework.util;
+
+import java.io.IOException;
+
+import com.gomo.rpcframework.RPCConfig;
+import com.gomo.rpcframework.Request;
+import com.gomo.rpcframework.Response;
+import com.google.gson.Gson;
+
+public class RPCEncode {
+ 	static Gson gson = new Gson();
+ 	static byte spit = '\n';
+ 	static String spitString = "\n";
+
+	public static Response decodeResponse(byte[] data) throws IOException{
+		int index = 0;
+		for (int i = 0; i < data.length; i++) {
+			if (data[i]==spit) {
+				index =i;
+				break;
+			}
+		}
+		String responseJson = new String(data,0,index,RPCConfig.ENCODE);
+		String content = new String(data,index+1,data.length-index-1,RPCConfig.ENCODE);
+		Response response = gson.fromJson(responseJson, Response.class);
+		response.setContent(content);
+		return response;
+	}
+	
+	public static byte[] encodeResponse(Response response) throws IOException{
+		String content = response.getContent();
+		response.setContent(null);
+		String responseJson = gson.toJson(response);
+		String data = responseJson+spitString+content;
+		return data.getBytes(RPCConfig.ENCODE);
+	}
+	
+	public static Request decodeRequest(byte[] data) throws IOException{
+		int index = 0;
+		for (int i = 0; i < data.length; i++) {
+			if (data[i]==spit) {
+				index =i;
+				break;
+			}
+		}
+		String responseJson = new String(data,0,index,RPCConfig.ENCODE);
+		String content = new String(data,index+1,data.length-index-1,RPCConfig.ENCODE);
+		Request request = gson.fromJson(responseJson, Request.class);
+		request.setContent(content);
+		return request;
+	}
+	
+	public static byte[] encodeRequest(Request request) throws IOException{
+		String content = request.getContent();
+		request.setContent(null);
+		String requestJson = gson.toJson(request);
+		String data = requestJson+spitString+content;
+		return data.getBytes(RPCConfig.ENCODE);
+	}
+}

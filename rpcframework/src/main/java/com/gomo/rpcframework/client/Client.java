@@ -20,10 +20,12 @@ public class Client {
 	private int soTimeout = 30; // 链接超时 单位秒
 
 	private int status = 0; // 0初始状态 1已初始化 2 已销毁
-
-	public Client() {
-
-	}
+	
+	private int ioMode = BIO;
+	
+	public static int NIO=1;
+	
+	public static int BIO=0;
 
 	public synchronized void init() {
 		if (status != 0) {
@@ -39,7 +41,12 @@ public class Client {
 				int index = i % hosts.length;
 				String server = hosts[index].trim();
 				String ce[] = server.split(":");
-				Connection connection = new NioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
+				Connection connection ;
+				if (ioMode==BIO) {
+					connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
+				}else{
+					connection = new NioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
+				}
 				connectionQueue.put(connection);
 			} catch (Exception e) {
 				RPCLog.error("create client faild", e);
@@ -129,4 +136,12 @@ public class Client {
 		this.soTimeout = soTimeout;
 	}
 
+	public int getIoMode() {
+		return ioMode;
+	}
+
+	public void setIoMode(int ioMode) {
+		this.ioMode = ioMode;
+	}
+	
 }

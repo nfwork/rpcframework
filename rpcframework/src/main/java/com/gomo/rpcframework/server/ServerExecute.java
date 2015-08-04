@@ -16,7 +16,6 @@ public class ServerExecute implements Runnable {
 	private ByteBuffer dataBuf;
 	private ByteBuffer falgBuf = ByteBuffer.allocate(1);
 	private ByteBuffer lengthBuf = ByteBuffer.allocate(4);
-	private String inputParam;
 	private ServiceHandle serviceHandle;
 
 	public ServerExecute(ServiceHandle serviceHandle) {
@@ -48,7 +47,6 @@ public class ServerExecute implements Runnable {
 			}
 		} while (lengthBuf.position() < 4);
 		int length = ByteUtil.toInt(lengthBuf.array());
-
 		
 		// 报文内容读取
 		dataBuf = ByteBuffer.allocate(length);
@@ -58,14 +56,12 @@ public class ServerExecute implements Runnable {
 				throw new NoDataException();
 			}
 		} while (dataBuf.position() < length);
-		inputParam = new String(dataBuf.array(), RPCConfig.ENCODE);
 	}
 
 	public void run() {
 		try {
 			SocketChannel channel = (SocketChannel) key.channel();
-			String output = serviceHandle.handle(inputParam);
-			byte[] outputByte = output.getBytes(RPCConfig.ENCODE);
+			byte[] outputByte = serviceHandle.handle(dataBuf.array());
 			int  outputLength = outputByte.length;
 			byte[] lengthByte = ByteUtil.toByteArray(outputLength);
 			channel.write(ByteBuffer.wrap(lengthByte));
