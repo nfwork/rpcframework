@@ -22,9 +22,7 @@ public class Server implements Runnable {
 	private Selector selector;
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle = new ServiceHandle();
-
-	public Server() {
-	}
+	private int status = 0;// 0初始状态 1已初始化 2 已销毁
 	
 	public void registService(String serviceName,Service service){
 		serviceHandle.regist(serviceName, service);
@@ -35,6 +33,7 @@ public class Server implements Runnable {
 	 * */
 	public void start() {
 		try {
+			status = 1;
 			executorService = Executors.newFixedThreadPool(workNum);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
@@ -48,6 +47,16 @@ public class Server implements Runnable {
 		} catch (Exception e) {
 			RPCLog.error("server start error", e);
 		}
+	}
+	
+	public void stop(){
+		status = 2;
+		try {
+			serversocket.close();
+		} catch (IOException e) {
+			RPCLog.error("server stop error", e);
+		}
+		executorService.shutdown();
 	}
 
 	/**
@@ -64,10 +73,13 @@ public class Server implements Runnable {
 	}
 
 	public void run() {
-		while (true) {
+		while (status == 1) {
 			try {
-				this.selector.select();
-			} catch (IOException e) {
+				int size = this.selector.select();
+				if (size==0) {
+					Thread.sleep(1);
+				}
+			} catch (Exception e) {
 				RPCLog.error("server select error", e);
 			}
 			// 返回此选择器的已选择键集
