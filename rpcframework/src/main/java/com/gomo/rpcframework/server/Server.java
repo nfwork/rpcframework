@@ -17,7 +17,7 @@ import com.gomo.rpcframework.util.RPCLog;
 public class Server implements Runnable {
 
 	private int port=8090;
-	private int workNum=10;
+	private int workerNum=10;
 	private ServerSocketChannel serversocket;
 	private Selector selector;
 	private ExecutorService executorService;
@@ -34,7 +34,7 @@ public class Server implements Runnable {
 	public void start() {
 		try {
 			status = 1;
-			executorService = Executors.newFixedThreadPool(workNum);
+			executorService = Executors.newFixedThreadPool(workerNum);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
 			this.serversocket.configureBlocking(false);
@@ -125,12 +125,12 @@ public class Server implements Runnable {
 		this.port = port;
 	}
 
-	public int getWorkNum() {
-		return workNum;
+	public int getWorkerNum() {
+		return workerNum;
 	}
 
-	public void setWorkNum(int workNum) {
-		this.workNum = workNum;
+	public void setWorkerNum(int workerNum) {
+		this.workerNum = workerNum;
 	}
 	
 }
