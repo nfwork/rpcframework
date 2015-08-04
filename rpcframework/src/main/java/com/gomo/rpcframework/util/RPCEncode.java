@@ -20,8 +20,17 @@ public class RPCEncode {
 			}
 		}
 		String responseJson = new String(data, 0, index, RPCConfig.ENCODE);
-		String content = new String(data, index + 1, data.length - index - 1, RPCConfig.ENCODE);
 		Response response = gson.fromJson(responseJson, Response.class);
+
+		String content;
+		if (response.isCompress()) {
+			byte[] contentbyte = new byte[data.length - index - 1];
+			System.arraycopy(data, index + 1, contentbyte, 0, contentbyte.length);
+			contentbyte = GZIPHelper.unzip(contentbyte);
+			content = new String(contentbyte, RPCConfig.ENCODE);
+		} else {
+			content = new String(data, index + 1, data.length - index - 1, RPCConfig.ENCODE);
+		}
 		response.setContent(content);
 		return response;
 	}
@@ -30,7 +39,11 @@ public class RPCEncode {
 		String content = response.getContent() == null ? "" : response.getContent();
 		response.setContent(null);
 		String responseJson = gson.toJson(response);
-		return ByteUtil.concatAll(responseJson.getBytes(RPCConfig.ENCODE), new byte[] { spit }, content.getBytes(RPCConfig.ENCODE));
+		byte contentbyte[] = content.getBytes(RPCConfig.ENCODE);
+		if (response.isCompress()) {
+			contentbyte = GZIPHelper.zip(contentbyte);
+		}
+		return ByteUtil.concatAll(responseJson.getBytes(RPCConfig.ENCODE), new byte[] { spit }, contentbyte);
 	}
 
 	public static Request decodeRequest(byte[] data) throws IOException {
@@ -42,8 +55,16 @@ public class RPCEncode {
 			}
 		}
 		String responseJson = new String(data, 0, index, RPCConfig.ENCODE);
-		String content = new String(data, index + 1, data.length - index - 1, RPCConfig.ENCODE);
 		Request request = gson.fromJson(responseJson, Request.class);
+		String content;
+		if (request.isCompress()) {
+			byte[] contentbyte = new byte[data.length - index - 1];
+			System.arraycopy(data, index + 1, contentbyte, 0, contentbyte.length);
+			contentbyte = GZIPHelper.unzip(contentbyte);
+			content = new String(contentbyte, RPCConfig.ENCODE);
+		} else {
+			content = new String(data, index + 1, data.length - index - 1, RPCConfig.ENCODE);
+		}
 		request.setContent(content);
 		return request;
 	}
@@ -52,6 +73,10 @@ public class RPCEncode {
 		String content = request.getContent() == null ? "" : request.getContent();
 		request.setContent(null);
 		String requestJson = gson.toJson(request);
-		return ByteUtil.concatAll(requestJson.getBytes(RPCConfig.ENCODE), new byte[] { spit }, content.getBytes(RPCConfig.ENCODE));
+		byte contentbyte[] = content.getBytes(RPCConfig.ENCODE);
+		if (request.isCompress()) {
+			contentbyte = GZIPHelper.zip(contentbyte);
+		}
+		return ByteUtil.concatAll(requestJson.getBytes(RPCConfig.ENCODE), new byte[] { spit }, contentbyte);
 	}
 }

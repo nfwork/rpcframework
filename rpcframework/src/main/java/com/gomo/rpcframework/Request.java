@@ -4,6 +4,15 @@ public class Request {
 
 	String serviceName;
 	String content;
+	boolean compress;
+	
+	public boolean isCompress() {
+		return compress;
+	}
+
+	public void setCompress(boolean compress) {
+		this.compress = compress;
+	}
 
 	public String getServiceName() {
 		return serviceName;
