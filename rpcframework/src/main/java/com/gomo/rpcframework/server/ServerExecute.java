@@ -66,17 +66,20 @@ public class ServerExecute implements Runnable {
 
 			int dataLength = data.length;
 			int sendTotalNum = 0;
+			int sendNum = 0;
+			ByteBuffer byteBuffer = null;
 			do {
-				ByteBuffer byteBuffer = ByteBuffer.wrap(data, sendTotalNum, (dataLength - sendTotalNum));
-				int sendNum = 0;
-				do {
+				if (!channel.isOpen()) {
+					break;
+				}
+				if (sendNum > 0 || sendTotalNum == 0) {
+					byteBuffer = ByteBuffer.wrap(data, sendTotalNum, (dataLength - sendTotalNum));
+				}
+				sendNum = channel.write(byteBuffer);
+				if (sendNum == 0) {// 未发送数据时，等待1ms 再次发送
+					Thread.sleep(1);
 					sendNum = channel.write(byteBuffer);
-					if (sendNum == 0) {
-						Thread.sleep(1);
-					} else {
-						break;
-					}
-				} while (true);
+				}
 				sendTotalNum += sendNum;
 			} while (sendTotalNum < dataLength);
 		} catch (Exception e) {

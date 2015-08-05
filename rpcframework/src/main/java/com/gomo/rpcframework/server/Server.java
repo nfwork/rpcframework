@@ -11,20 +11,19 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.RPCLog;
 
 public class Server implements Runnable {
 
-	private int port=8090;
-	private int workerNum=10;
+	private int port = 8090;
+	private int workerNum = 10;
 	private ServerSocketChannel serversocket;
 	private Selector selector;
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle = new ServiceHandle();
 	private int status = 0;// 0初始状态 1已初始化 2 已销毁
-	
-	public void registService(String serviceName,Service service){
+
+	public void registService(String serviceName, Service service) {
 		serviceHandle.regist(serviceName, service);
 	}
 
@@ -48,8 +47,8 @@ public class Server implements Runnable {
 			RPCLog.error("server start error", e);
 		}
 	}
-	
-	public void stop(){
+
+	public void stop() {
 		status = 2;
 		try {
 			serversocket.close();
@@ -76,7 +75,7 @@ public class Server implements Runnable {
 		while (status == 1) {
 			try {
 				int size = this.selector.select();
-				if (size==0) {
+				if (size == 0) {
 					Thread.sleep(1);
 				}
 			} catch (Exception e) {
@@ -99,21 +98,25 @@ public class Server implements Runnable {
 						serverExecute.read();
 						executorService.execute(serverExecute);
 					}
-				} catch (NoDataException e) {
-					key.cancel();
-					try {
-						key.channel().close();
-					} catch (IOException e1) {
-					}
+				} catch (IOException e) {
+					closeChannel(key);
+					RPCLog.info(e.getMessage());
 				} catch (Exception e) {
-					key.cancel();
-					try {
-						key.channel().close();
-					} catch (IOException e1) {
-					}
+					closeChannel(key);
 					RPCLog.error("server runtime excetion", e);
 				}
 			}
+		}
+	}
+
+	private void closeChannel(SelectionKey key) {
+		try {
+			key.cancel();
+		} catch (Exception e) {
+		}
+		try {
+			key.channel().close();
+		} catch (Exception e1) {
 		}
 	}
 
@@ -132,5 +135,5 @@ public class Server implements Runnable {
 	public void setWorkerNum(int workerNum) {
 		this.workerNum = workerNum;
 	}
-	
+
 }
