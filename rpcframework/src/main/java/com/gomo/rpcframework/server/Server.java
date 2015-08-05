@@ -68,7 +68,7 @@ public class Server implements Runnable {
 		ServerSocketChannel server = (ServerSocketChannel) key.channel();
 		SocketChannel clientchannel = server.accept();
 		clientchannel.configureBlocking(false);
-		ServerExecute serverExecute = new ServerExecute(serviceHandle);
+		ServerExecute serverExecute = new ServerExecute(executorService,serviceHandle);
 		clientchannel.register(this.selector, SelectionKey.OP_READ, serverExecute);
 	}
 

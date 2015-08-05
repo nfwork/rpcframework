@@ -1,9 +1,9 @@
 package com.gomo.rpcframework.server;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ExecutorService;
 
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.exception.DatagramFormatException;
@@ -17,10 +17,12 @@ public class ServerExecute implements Runnable {
 	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
 	private ByteBuffer contentBuf;
 	private ServiceHandle serviceHandle;
+	private ExecutorService executorService;
 	private byte[] requestByte;
 
-	public ServerExecute(ServiceHandle serviceHandle) {
+	public ServerExecute(ExecutorService executorService,ServiceHandle serviceHandle) {
 		this.serviceHandle = serviceHandle;
+		this.executorService = executorService;
 	}
 
 	public boolean read() throws Exception {
@@ -71,34 +73,18 @@ public class ServerExecute implements Runnable {
 		return false;
 	}
 
+	public void writer(){
+		
+	}
 	public void run() {
 		try {
-			SocketChannel channel = (SocketChannel) key.channel();
 			byte[] outputByte = serviceHandle.handle(requestByte);
 			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
 			byte[] data = ByteUtil.concatAll(lengthByte, outputByte);
-
-			int dataLength = data.length;
-			int sendTotalNum = 0;
-			int sendNum = 0;
-			ByteBuffer byteBuffer = null;
-			do {
-				if (!channel.isOpen()) {
-					break;
-				}
-				if (sendNum > 0 || sendTotalNum == 0) {
-					byteBuffer = ByteBuffer.wrap(data, sendTotalNum, (dataLength - sendTotalNum));
-				}
-				sendNum = channel.write(byteBuffer);
-				if (sendNum == 0) {// 未发送数据时，等待1ms 再次发送
-					Thread.sleep(1);
-					sendNum = channel.write(byteBuffer);
-				}
-				sendTotalNum += sendNum;
-			} while (sendTotalNum < dataLength);
-		} catch (IOException e) {
-			closeChannel(key);
-			RPCLog.info(e.getMessage());
+			requestByte = null;
+			
+			ServerWriter writer = new ServerWriter(executorService,key, data);
+			executorService.execute(writer);
 		} catch (Exception e) {
 			closeChannel(key);
 			RPCLog.error("server execute run error", e);
