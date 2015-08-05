@@ -1,5 +1,6 @@
 package com.gomo.rpcframework.server;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -13,54 +14,67 @@ import com.gomo.rpcframework.util.RPCLog;
 public class ServerExecute implements Runnable {
 
 	private SelectionKey key;
-	private ByteBuffer dataBuf;
-	private ByteBuffer falgBuf = ByteBuffer.allocate(1);
-	private ByteBuffer lengthBuf = ByteBuffer.allocate(4);
+	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
+	private ByteBuffer contentBuf;
 	private ServiceHandle serviceHandle;
+	private byte[] requestByte;
 
 	public ServerExecute(ServiceHandle serviceHandle) {
 		this.serviceHandle = serviceHandle;
 	}
 
-	public void read() throws Exception {
+	public boolean read() throws Exception {
 		SocketChannel channel = (SocketChannel) key.channel();
-		int index;
-		// 协议标识 校验合法性
-		falgBuf.clear();
-		do {
-			index = channel.read(falgBuf);
+		int index = 0;
+
+		// 读取头
+		if (contentBuf == null) {
+			while ((index = channel.read(headerBuf)) > 0) {
+				if (headerBuf.position() < 5) {
+					return false;
+				} else {
+					byte[] data = headerBuf.array();
+					if (data[0] != RPCConfig.FLAG) {
+						throw new DatagramFormatException("Illegal request");
+					} else {
+						// 读取报文长度
+						byte[] lengthByte = new byte[4];
+						System.arraycopy(data, 1, lengthByte, 0, 4);
+						int DatagramLength = ByteUtil.toInt(lengthByte);
+						contentBuf = ByteBuffer.allocate(DatagramLength);
+						headerBuf.clear();
+						break;
+					}
+				}
+			}
 			if (index == -1) {
 				throw new NoDataException();
 			}
-		} while (falgBuf.position() < 1);
-		if (falgBuf.array()[0] != RPCConfig.FLAG) {
-			throw new DatagramFormatException("Illegal request");
 		}
 
-		// 读取报文长度
-		lengthBuf.clear();
-		do {
-			index = channel.read(lengthBuf);
+		// 读取内容
+		if (contentBuf != null) {
+			while ((index = channel.read(contentBuf)) > 0) {
+				if (contentBuf.position() < contentBuf.limit()) {
+					continue;
+				} else {
+					requestByte = contentBuf.array();
+					contentBuf = null;
+					return true;
+				}
+			}
 			if (index == -1) {
 				throw new NoDataException();
 			}
-		} while (lengthBuf.position() < 4);
-		int length = ByteUtil.toInt(lengthBuf.array());
-
-		// 报文内容读取
-		dataBuf = ByteBuffer.allocate(length);
-		do {
-			index = channel.read(dataBuf);
-			if (index == -1) {
-				throw new NoDataException();
-			}
-		} while (dataBuf.position() < length);
+		}
+		
+		return false;
 	}
 
 	public void run() {
 		try {
 			SocketChannel channel = (SocketChannel) key.channel();
-			byte[] outputByte = serviceHandle.handle(dataBuf.array());
+			byte[] outputByte = serviceHandle.handle(requestByte);
 			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
 			byte[] data = ByteUtil.concatAll(lengthByte, outputByte);
 
@@ -82,9 +96,23 @@ public class ServerExecute implements Runnable {
 				}
 				sendTotalNum += sendNum;
 			} while (sendTotalNum < dataLength);
+		} catch (IOException e) {
+			closeChannel(key);
+			RPCLog.info(e.getMessage());
 		} catch (Exception e) {
-			key.cancel();
+			closeChannel(key);
 			RPCLog.error("server execute run error", e);
+		}
+	}
+
+	public void closeChannel(SelectionKey key) {
+		try {
+			key.cancel();
+		} catch (Exception e) {
+		}
+		try {
+			key.channel().close();
+		} catch (Exception e1) {
 		}
 	}
 

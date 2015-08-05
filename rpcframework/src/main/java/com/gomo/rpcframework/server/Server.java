@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.RPCLog;
 
 public class Server implements Runnable {
@@ -95,9 +96,12 @@ public class Server implements Runnable {
 					} else if (key.isReadable()) {
 						ServerExecute serverExecute = (ServerExecute) key.attachment();
 						serverExecute.setKey(key);
-						serverExecute.read();
-						executorService.execute(serverExecute);
+						if (serverExecute.read()) {
+							executorService.execute(serverExecute);
+						}
 					}
+				} catch (NoDataException e) {
+					closeChannel(key);
 				} catch (IOException e) {
 					closeChannel(key);
 					RPCLog.info(e.getMessage());
@@ -109,7 +113,7 @@ public class Server implements Runnable {
 		}
 	}
 
-	private void closeChannel(SelectionKey key) {
+	public void closeChannel(SelectionKey key) {
 		try {
 			key.cancel();
 		} catch (Exception e) {
