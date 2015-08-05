@@ -3,6 +3,7 @@ package com.gomo.rpcframework.client;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -61,10 +62,14 @@ public class NioConnection implements Connection {
 		// 读取报文长度
 		int index = 0;
 		lengthBuf.clear();
+		long readBegin = System.currentTimeMillis();
 		do {
 			index = socketChannel.read(lengthBuf);
 			if (index == -1) {
 				throw new NoDataException();
+			}
+			if (System.currentTimeMillis()-readBegin>socketChannel.socket().getSoTimeout()) {
+				throw new SocketTimeoutException("read timeout");
 			}
 		} while (lengthBuf.position() < 4);
 		int length = ByteUtil.toInt(lengthBuf.array());
