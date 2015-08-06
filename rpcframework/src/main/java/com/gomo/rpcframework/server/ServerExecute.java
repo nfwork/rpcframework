@@ -11,7 +11,7 @@ import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCLog;
 
-public class ServerExecute implements Runnable {
+class ServerExecute implements Runnable {
 
 	private SelectionKey key;
 	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
@@ -73,9 +73,6 @@ public class ServerExecute implements Runnable {
 		return false;
 	}
 
-	public void writer(){
-		
-	}
 	public void run() {
 		try {
 			byte[] outputByte = serviceHandle.handle(requestByte);
@@ -86,19 +83,8 @@ public class ServerExecute implements Runnable {
 			ServerWriter writer = new ServerWriter(executorService,key, data);
 			executorService.execute(writer);
 		} catch (Exception e) {
-			closeChannel(key);
+			Server.closeChannel(key);
 			RPCLog.error("server execute run error", e);
-		}
-	}
-
-	public void closeChannel(SelectionKey key) {
-		try {
-			key.cancel();
-		} catch (Exception e) {
-		}
-		try {
-			key.channel().close();
-		} catch (Exception e1) {
 		}
 	}
 

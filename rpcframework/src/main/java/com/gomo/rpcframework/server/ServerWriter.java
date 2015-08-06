@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 
 import com.gomo.rpcframework.util.RPCLog;
 
-public class ServerWriter implements Runnable {
+class ServerWriter implements Runnable {
 
 	private SelectionKey key;
 	private byte[] data;
@@ -31,10 +31,10 @@ public class ServerWriter implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			closeChannel(key);
+			Server.closeChannel(key);
 			RPCLog.info(e.getMessage());
 		} catch (Exception e) {
-			closeChannel(key);
+			Server.closeChannel(key);
 			RPCLog.error("server execute run error", e);
 		}
 	}
@@ -42,17 +42,6 @@ public class ServerWriter implements Runnable {
 	public void writer(SocketChannel channel ) throws Exception {
 		ByteBuffer byteBuffer = ByteBuffer.wrap(data, sendIndex, (data.length - sendIndex));
 		sendIndex += channel.write(byteBuffer);
-	}
-
-	public void closeChannel(SelectionKey key) {
-		try {
-			key.cancel();
-		} catch (Exception e) {
-		}
-		try {
-			key.channel().close();
-		} catch (Exception e1) {
-		}
 	}
 
 }

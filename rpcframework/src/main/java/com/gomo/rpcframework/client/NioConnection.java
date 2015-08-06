@@ -15,7 +15,7 @@ import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
 
-public class NioConnection implements Connection {
+class NioConnection implements Connection {
 
 	// 创建缓冲区
 	private ByteBuffer lengthBuf = ByteBuffer.allocate(4);

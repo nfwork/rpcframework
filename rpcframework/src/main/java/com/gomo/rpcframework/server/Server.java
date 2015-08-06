@@ -113,7 +113,7 @@ public class Server implements Runnable {
 		}
 	}
 
-	public void closeChannel(SelectionKey key) {
+	static void closeChannel(SelectionKey key) {
 		try {
 			key.cancel();
 		} catch (Exception e) {

@@ -9,7 +9,7 @@ import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
 
-public class ServiceHandle {
+class ServiceHandle {
 
 	Map<String, Service> serviceMap = new HashMap<String, Service>();
 

@@ -12,7 +12,7 @@ import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
 import com.gomo.rpcframework.util.RPCLog;
 
-public class BioConnection implements Connection {
+class BioConnection implements Connection {
 
 	private Socket socket;
 	private OutputStream outputStream;

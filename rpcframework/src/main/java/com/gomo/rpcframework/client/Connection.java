@@ -5,7 +5,7 @@ import java.io.IOException;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
 
-public interface Connection {
+interface Connection {
 
 	public void refresh();
 
