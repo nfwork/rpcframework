@@ -23,9 +23,9 @@ public class Client {
 	
 	private int ioMode = BIO;
 	
-	public static int NIO=1;
+	public static final int NIO=1;
 	
-	public static int BIO=0;
+	public static final int BIO=0;
 
 	public synchronized void init() {
 		if (status != 0) {
