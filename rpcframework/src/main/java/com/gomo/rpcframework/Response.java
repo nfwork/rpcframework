@@ -2,7 +2,7 @@ package com.gomo.rpcframework;
 
 public class Response {
 
-	String content;
+	transient String content;
 
 	boolean success;
 

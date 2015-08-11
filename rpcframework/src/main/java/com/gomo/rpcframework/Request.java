@@ -3,7 +3,7 @@ package com.gomo.rpcframework;
 public class Request {
 
 	String serviceName;
-	String content;
+	transient String content;
 	boolean compress;
 	
 	public boolean isCompress() {

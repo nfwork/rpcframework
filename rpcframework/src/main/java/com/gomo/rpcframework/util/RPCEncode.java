@@ -71,7 +71,6 @@ public class RPCEncode {
 
 	public static byte[] encodeRequest(Request request) throws IOException {
 		String content = request.getContent() == null ? "" : request.getContent();
-		request.setContent(null);
 		String requestJson = gson.toJson(request);
 		byte contentbyte[] = content.getBytes(RPCConfig.ENCODE);
 		if (request.isCompress()) {
