@@ -10,10 +10,10 @@ import java.nio.channels.SocketChannel;
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
+import com.gomo.rpcframework.exception.ConnetException;
 import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
-import com.gomo.rpcframework.util.RPCLog;
 
 class NioConnection implements Connection {
 
@@ -32,13 +32,18 @@ class NioConnection implements Connection {
 	}
 
 	private void init() {
-		try {
-			InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
-			socketChannel = SocketChannel.open();
-			socketChannel.socket().setSoTimeout(soTimeout * 1000);
-			socketChannel.connect(address);
-		} catch (Exception e) {
-			RPCLog.error("connection init failed", e);
+		for (int i = 0; i < 4; i++) {
+			try {
+				InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
+				socketChannel = SocketChannel.open();
+				socketChannel.socket().setSoTimeout(soTimeout * 1000);
+				socketChannel.connect(address);
+				return;
+			} catch (Exception e) {
+				if (i == 3) {
+					throw new ConnetException("connet to " + host + ":" + port + " failed, after three time retry");
+				}
+			}
 		}
 	}
 
@@ -68,7 +73,7 @@ class NioConnection implements Connection {
 			if (index == -1) {
 				throw new NoDataException();
 			}
-			if (System.currentTimeMillis()-readBegin>socketChannel.socket().getSoTimeout()) {
+			if (System.currentTimeMillis() - readBegin > socketChannel.socket().getSoTimeout()) {
 				throw new SocketTimeoutException("read timeout");
 			}
 		} while (lengthBuf.position() < 4);

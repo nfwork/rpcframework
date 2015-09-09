@@ -8,9 +8,9 @@ import java.net.Socket;
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
+import com.gomo.rpcframework.exception.ConnetException;
 import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
-import com.gomo.rpcframework.util.RPCLog;
 
 class BioConnection implements Connection {
 
@@ -29,13 +29,18 @@ class BioConnection implements Connection {
 	}
 
 	private void init() {
-		try {
-			socket = new Socket(host, port);
-			socket.setSoTimeout(soTimeout * 1000);
-			outputStream = socket.getOutputStream();
-			inputStream = socket.getInputStream();
-		} catch (Exception e) {
-			RPCLog.error("connection init failed", e);
+		for (int i = 0; i < 4; i++) {
+			try {
+				socket = new Socket(host, port);
+				socket.setSoTimeout(soTimeout * 1000);
+				outputStream = socket.getOutputStream();
+				inputStream = socket.getInputStream();
+				return;
+			} catch (Exception e) {
+				if (i == 3) {
+					throw new ConnetException("connet to " + host + ":" + port + " failed,after three time retry");
+				}
+			}
 		}
 	}
 
