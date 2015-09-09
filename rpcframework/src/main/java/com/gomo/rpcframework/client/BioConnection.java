@@ -38,7 +38,7 @@ class BioConnection implements Connection {
 				return;
 			} catch (Exception e) {
 				if (i == 3) {
-					throw new ConnetException("connet to " + host + ":" + port + " failed,after three time retry");
+					throw new ConnetException("connet to " + host + ":" + port + " failed, after three time retry");
 				}
 			}
 		}
