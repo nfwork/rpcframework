@@ -99,4 +99,13 @@ class NioConnection implements Connection {
 		} catch (Exception e) {
 		}
 	}
+
+	@Override
+	public boolean validate() {
+		if (socketChannel.isConnected() && socketChannel.isOpen()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }

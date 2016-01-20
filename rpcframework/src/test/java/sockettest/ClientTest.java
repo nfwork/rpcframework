@@ -10,10 +10,9 @@ public class ClientTest {
 
 		Client client = new Client();
 		client.setServers("127.0.0.1:8090");
-		client.setConnectionNum(10);
 		client.init();
 
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < 100000; i++) {
 			try {
 				long begin = System.currentTimeMillis();
 				Request request = new Request();
@@ -22,6 +21,7 @@ public class ClientTest {
 				Response response = client.call(request);
 				long end = System.currentTimeMillis();
 				System.err.println("cost time:" + (end - begin) + ",content:" + response.getContent());
+				Thread.sleep(2);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

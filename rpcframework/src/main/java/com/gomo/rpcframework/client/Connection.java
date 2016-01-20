@@ -12,4 +12,6 @@ interface Connection {
 	public Response call(Request request) throws IOException ;
 
 	public void close();
+	
+	public boolean validate();
 }

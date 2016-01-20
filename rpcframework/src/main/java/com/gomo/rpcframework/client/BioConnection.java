@@ -103,4 +103,13 @@ class BioConnection implements Connection {
 		} catch (Exception e) {
 		}
 	}
+
+	@Override
+	public boolean validate() {
+		if (socket.isClosed() == false && socket.isConnected() && socket.isInputShutdown() == false && socket.isOutputShutdown() == false) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }

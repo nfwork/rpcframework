@@ -1,21 +1,21 @@
 package com.gomo.rpcframework.client;
 
-import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.pool2.impl.AbandonedConfig;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
-import com.gomo.rpcframework.util.RPCLog;
 
 public class Client {
 
-	private BlockingQueue<Connection> connectionQueue;
-
 	private String servers = "127.0.0.1:8090"; // 服务地址
 
-	private int connectionNum = 10; // 链接数量
+	private int maxTotal = 100; // 链接数量
+
+	private int maxIdle = 10;
+
+	private int minIdle = 5;
 
 	private int soTimeout = 30; // 链接超时 单位秒
 
@@ -27,6 +27,8 @@ public class Client {
 
 	public static final int BIO = 0;
 
+	GenericObjectPool<Connection> pool;
+
 	public synchronized void init() {
 		if (status != 0) {
 			throw new RuntimeException("client has inited");
@@ -34,24 +36,19 @@ public class Client {
 			status = 1;
 		}
 
-		String[] hosts = servers.split(",");
-		connectionQueue = new LinkedBlockingQueue<Connection>();
-		for (int i = 0; i < connectionNum; i++) {
-			int index = i % hosts.length;
-			String server = hosts[index].trim();
-			String ce[] = server.split(":");
-			Connection connection;
-			if (ioMode == BIO) {
-				connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
-			} else {
-				connection = new NioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
-			}
-			try {
-				connectionQueue.put(connection);
-			} catch (InterruptedException e) {
-				RPCLog.error("put connection faild", e);
-			}
-		}
+		// 配置基本属性
+		GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+		poolConfig.setTestOnBorrow(true);
+		poolConfig.setJmxEnabled(true);
+		poolConfig.setMaxTotal(maxTotal);
+		poolConfig.setMaxIdle(maxIdle);
+		poolConfig.setMinIdle(minIdle);
+		poolConfig.setTimeBetweenEvictionRunsMillis(1000 * 60 * 5);
+		poolConfig.setNumTestsPerEvictionRun(10);
+		AbandonedConfig abandonedConfig = new AbandonedConfig();
+
+		ConnectionPoolFactory factory = new ConnectionPoolFactory(servers, soTimeout, ioMode);
+		pool = new GenericObjectPool<Connection>(factory, poolConfig, abandonedConfig);
 	}
 
 	public synchronized void destory() {
@@ -60,36 +57,11 @@ public class Client {
 		} else {
 			status = 2;
 		}
-		if (connectionQueue != null) {
-			for (Connection connection : connectionQueue) {
-				connection.close();
-			}
-			connectionQueue = null;
-		}
+		pool.close();
 	}
 
-	private Connection getConnection() {
-		try {
-			return connectionQueue.take();
-		} catch (Exception e) {
-			RPCLog.error("take connection faild", e);
-		}
-		return null;
-	}
 
-	private void returnConnection(Connection connection) {
-		try {
-			if (connectionQueue == null) {
-				connection.close();
-			} else {
-				connectionQueue.put(connection);
-			}
-		} catch (InterruptedException e) {
-			RPCLog.error("return connection faild", e);
-		}
-	}
-
-	public Response call(Request request) throws IOException {
+	public Response call(Request request) throws Exception {
 		if (request == null || request.getServiceName() == null) {
 			throw new RuntimeException("request or request servciename cannot be null");
 		}
@@ -98,16 +70,11 @@ public class Client {
 		}
 		Connection connection = null;
 		try {
-			connection = getConnection();
-			return connection.call(request);
-		} catch (SocketTimeoutException e) {
-			throw e;
-		} catch (Exception e) {
-			connection.refresh();
+			connection = pool.borrowObject();
 			return connection.call(request);
 		} finally {
 			if (connection != null) {
-				returnConnection(connection);
+				pool.returnObject(connection);
 			}
 		}
 	}
@@ -118,14 +85,6 @@ public class Client {
 
 	public void setServers(String servers) {
 		this.servers = servers;
-	}
-
-	public int getConnectionNum() {
-		return connectionNum;
-	}
-
-	public void setConnectionNum(int connectionNum) {
-		this.connectionNum = connectionNum;
 	}
 
 	public int getSoTimeout() {
@@ -144,4 +103,28 @@ public class Client {
 		this.ioMode = ioMode;
 	}
 
+	public int getMaxTotal() {
+		return maxTotal;
+	}
+
+	public void setMaxTotal(int maxTotal) {
+		this.maxTotal = maxTotal;
+	}
+
+	public int getMaxIdle() {
+		return maxIdle;
+	}
+
+	public void setMaxIdle(int maxIdle) {
+		this.maxIdle = maxIdle;
+	}
+
+	public int getMinIdle() {
+		return minIdle;
+	}
+
+	public void setMinIdle(int minIdle) {
+		this.minIdle = minIdle;
+	}
+	
 }
