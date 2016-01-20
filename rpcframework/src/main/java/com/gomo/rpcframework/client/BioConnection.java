@@ -9,6 +9,7 @@ import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
 import com.gomo.rpcframework.exception.ConnetException;
+import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.ByteUtil;
 import com.gomo.rpcframework.util.RPCEncode;
 
@@ -61,14 +62,22 @@ class BioConnection implements Connection {
 
 		index = inputStream.read(blenght);
 		do {
-			index = index + inputStream.read(blenght, index, (4 - index));
+			int read = inputStream.read(blenght, index, (4 - index));
+			if (read == -1) {
+				throw new NoDataException();
+			}
+			index = index + read;
 		} while (index != 4);
 
 		int responseLength = ByteUtil.toInt(blenght);
 		index = 0;
 		byte pkg[] = new byte[responseLength];
 		do {
-			index = index + inputStream.read(pkg, index, (responseLength - index));
+			int read = inputStream.read(pkg, index, (responseLength - index));
+			if (read == -1) {
+				throw new NoDataException();
+			}
+			index = index + read;
 		} while (index != responseLength);
 
 		return RPCEncode.decodeResponse(pkg);
