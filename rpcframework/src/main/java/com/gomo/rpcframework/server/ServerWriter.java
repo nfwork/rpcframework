@@ -35,7 +35,7 @@ class ServerWriter implements Runnable {
 			RPCLog.info(e.getMessage());
 		} catch (Exception e) {
 			Server.closeChannel(key);
-			RPCLog.error("server execute run error", e);
+			RPCLog.error("server writer run error", e);
 		}
 	}
 
