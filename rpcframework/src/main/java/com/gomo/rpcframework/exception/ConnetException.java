@@ -7,4 +7,8 @@ public class ConnetException extends RuntimeException{
 	public ConnetException(String message){
 		super(message);
 	}
+	
+	public ConnetException(String message,Throwable throwable){
+		super(message, throwable);
+	}
 }

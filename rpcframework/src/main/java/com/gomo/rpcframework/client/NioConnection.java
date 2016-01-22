@@ -40,8 +40,9 @@ class NioConnection implements Connection {
 				socketChannel.connect(address);
 				return;
 			} catch (Exception e) {
+				close();
 				if (i == 3) {
-					throw new ConnetException("connet to " + host + ":" + port + " failed, after three time retry");
+					throw new ConnetException("connet to " + host + ":" + port + " failed, after three time retry", e);
 				}
 			}
 		}
