@@ -49,7 +49,7 @@ class ServerReader {
 		if (contentBuf != null) {
 			while ((index = channel.read(contentBuf)) > 0) {
 				if (contentBuf.position() < contentBuf.limit()) {
-					continue;
+					return null;
 				} else {
 					byte[] requestByte = contentBuf.array();
 					contentBuf = null;
