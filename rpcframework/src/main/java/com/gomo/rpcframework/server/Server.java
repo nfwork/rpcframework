@@ -109,9 +109,6 @@ public class Server implements Runnable {
 					}
 				} catch (NoDataException e) {
 					closeChannel(key);
-				} catch (IOException e) {
-					closeChannel(key);
-					RPCLog.info(e.getMessage());
 				} catch (Exception e) {
 					closeChannel(key);
 					RPCLog.error("server runtime excetion", e);

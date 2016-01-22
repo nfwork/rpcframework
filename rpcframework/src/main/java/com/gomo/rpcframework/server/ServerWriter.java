@@ -1,6 +1,5 @@
 package com.gomo.rpcframework.server;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -27,9 +26,6 @@ class ServerWriter implements Runnable {
 					executorService.execute(this);
 				}
 			}
-		} catch (IOException e) {
-			Server.closeChannel(key);
-			RPCLog.info(e.getMessage());
 		} catch (Exception e) {
 			Server.closeChannel(key);
 			RPCLog.error("server writer run error", e);
