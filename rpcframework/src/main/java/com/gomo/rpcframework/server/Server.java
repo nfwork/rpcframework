@@ -9,7 +9,10 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.RPCLog;
@@ -17,7 +20,8 @@ import com.gomo.rpcframework.util.RPCLog;
 public class Server implements Runnable {
 
 	private int port = 8090;
-	private int workerNum = 10;
+	private int minWorkerNum = 10;
+	private int maxWorkerNum = 100;
 	private ServerSocketChannel serversocket;
 	private Selector selector;
 	private ExecutorService executorService;
@@ -34,14 +38,18 @@ public class Server implements Runnable {
 	public void start() {
 		try {
 			status = 1;
-			executorService = Executors.newFixedThreadPool(workerNum);
+			if (minWorkerNum > maxWorkerNum) {
+				maxWorkerNum = minWorkerNum;
+			}
+			ThreadFactory factory = new RpcServerThreadFactory(port);
+			executorService = new ThreadPoolExecutor(minWorkerNum, maxWorkerNum, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
 			this.serversocket.configureBlocking(false);
 			this.serversocket.socket().bind(new InetSocketAddress(port));
 			this.serversocket.register(this.selector, SelectionKey.OP_ACCEPT);
 			Thread thread = new Thread(this);
-			thread.setName("RPCServer");
+			thread.setName("RPCServer-Main");
 			thread.start();
 			RPCLog.info("server started service on port:" + port);
 		} catch (Exception e) {
@@ -134,12 +142,20 @@ public class Server implements Runnable {
 		this.port = port;
 	}
 
-	public int getWorkerNum() {
-		return workerNum;
+	public int getMinWorkerNum() {
+		return minWorkerNum;
 	}
 
-	public void setWorkerNum(int workerNum) {
-		this.workerNum = workerNum;
+	public void setMinWorkerNum(int minWorkerNum) {
+		this.minWorkerNum = minWorkerNum;
+	}
+
+	public int getMaxWorkerNum() {
+		return maxWorkerNum;
+	}
+
+	public void setMaxWorkerNum(int maxWorkerNum) {
+		this.maxWorkerNum = maxWorkerNum;
 	}
 
 }
