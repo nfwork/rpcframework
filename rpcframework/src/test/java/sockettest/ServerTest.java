@@ -10,7 +10,6 @@ public class ServerTest {
 	public static void main(String[] args) {
 		Server server = new Server();
 		server.setPort(8090);
-		server.setWorkerNum(10);
 		server.registService("helloService", new HelloService());
 		server.start();
 	}
