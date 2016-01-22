@@ -76,7 +76,7 @@ public class Server implements Runnable {
 		ServerSocketChannel server = (ServerSocketChannel) key.channel();
 		SocketChannel clientchannel = server.accept();
 		clientchannel.configureBlocking(false);
-		ServerReader serverExecute = new ServerReader();
+		ServerReader serverExecute = new ServerReader(executorService, serviceHandle);
 		clientchannel.register(this.selector, SelectionKey.OP_READ, serverExecute);
 	}
 
@@ -104,11 +104,8 @@ public class Server implements Runnable {
 					} else if (key.isReadable()) {
 						ServerReader serverReader = (ServerReader) key.attachment();
 						serverReader.setKey(key);
-						byte[] data = serverReader.read();
-						if (data != null) {
-							ServerExecute execute = new ServerExecute(key, executorService, serviceHandle, data);
-							executorService.execute(execute);
-						}
+						key.interestOps(key.interestOps()&(~SelectionKey.OP_READ));
+						executorService.execute(serverReader);
 					}
 				} catch (NoDataException e) {
 					closeChannel(key);
