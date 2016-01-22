@@ -4,7 +4,7 @@ public class Response {
 
 	transient String content;
 
-	boolean success;
+	boolean success = true;
 
 	boolean compress;
 
