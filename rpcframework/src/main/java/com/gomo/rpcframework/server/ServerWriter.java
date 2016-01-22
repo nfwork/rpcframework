@@ -11,13 +11,12 @@ import com.gomo.rpcframework.util.RPCLog;
 class ServerWriter implements Runnable {
 
 	private SelectionKey key;
-	private byte[] data;
 	private ExecutorService executorService;
-	private int sendIndex;
+	private ByteBuffer byteBuffer;
 
 	public ServerWriter(ExecutorService executorService, SelectionKey key, byte[] data) {
 		this.key = key;
-		this.data = data;
+		this.byteBuffer = ByteBuffer.wrap(data);
 		this.executorService = executorService;
 	}
 
@@ -25,8 +24,8 @@ class ServerWriter implements Runnable {
 		try {
 			SocketChannel channel = (SocketChannel) key.channel();
 			if (channel.isOpen()) {
-				writer(channel);
-				if (sendIndex<data.length) {
+				channel.write(byteBuffer);
+				if (byteBuffer.position() < byteBuffer.limit()) {
 					executorService.execute(this);
 				}
 			}
@@ -37,11 +36,6 @@ class ServerWriter implements Runnable {
 			Server.closeChannel(key);
 			RPCLog.error("server writer run error", e);
 		}
-	}
-
-	public void writer(SocketChannel channel ) throws Exception {
-		ByteBuffer byteBuffer = ByteBuffer.wrap(data, sendIndex, (data.length - sendIndex));
-		sendIndex += channel.write(byteBuffer);
 	}
 
 }
