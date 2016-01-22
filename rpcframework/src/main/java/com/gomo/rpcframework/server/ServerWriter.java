@@ -14,9 +14,7 @@ class ServerWriter implements Runnable {
 	private ExecutorService executorService;
 	private ByteBuffer byteBuffer;
 
-	public ServerWriter(ExecutorService executorService, SelectionKey key, byte[] data) {
-		this.key = key;
-		this.byteBuffer = ByteBuffer.wrap(data);
+	public ServerWriter(ExecutorService executorService) {
 		this.executorService = executorService;
 	}
 
@@ -38,4 +36,12 @@ class ServerWriter implements Runnable {
 		}
 	}
 
+	public void setKey(SelectionKey key) {
+		this.key = key;
+	}
+
+	public void setResponseByte(byte[] data) {
+		this.byteBuffer = ByteBuffer.wrap(data);
+	}
+	
 }

@@ -12,12 +12,12 @@ class ServerExecute implements Runnable {
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle;
 	private SelectionKey key;
+	private ServerWriter writer;
 
-	public ServerExecute(SelectionKey key, ExecutorService executorService, ServiceHandle serviceHandle, byte[] requestByte) {
+	public ServerExecute(ExecutorService executorService, ServiceHandle serviceHandle) {
 		this.serviceHandle = serviceHandle;
 		this.executorService = executorService;
-		this.key = key;
-		this.requestByte = requestByte;
+		this.writer = new ServerWriter(executorService);
 	}
 
 	public void run() {
@@ -25,13 +25,21 @@ class ServerExecute implements Runnable {
 			byte[] outputByte = serviceHandle.handle(requestByte);
 			byte[] lengthByte = ByteUtil.toByteArray(outputByte.length);
 			byte[] data = ByteUtil.concatAll(lengthByte, outputByte);
-
-			ServerWriter writer = new ServerWriter(executorService, key, data);
+			writer.setKey(key);
+			writer.setResponseByte(data);
 			executorService.execute(writer);
 		} catch (Exception e) {
 			Server.closeChannel(key);
 			RPCLog.error("server execute run error", e);
 		}
+	}
+
+	public void setRequestByte(byte[] requestByte) {
+		this.requestByte = requestByte;
+	}
+
+	public void setKey(SelectionKey key) {
+		this.key = key;
 	}
 
 }

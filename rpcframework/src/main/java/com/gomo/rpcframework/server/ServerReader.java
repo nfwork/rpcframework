@@ -17,11 +17,12 @@ class ServerReader implements Runnable {
 	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
 	private ByteBuffer contentBuf;
 	private ExecutorService executorService;
-	private ServiceHandle serviceHandle;
+	private ServerExecute execute;
+	
 
 	public ServerReader(ExecutorService executorService, ServiceHandle serviceHandle) {
-		this.serviceHandle = serviceHandle;
 		this.executorService = executorService;
+		execute = new ServerExecute(executorService, serviceHandle);
 	}
 
 	public void run() {
@@ -61,7 +62,8 @@ class ServerReader implements Runnable {
 					if (contentBuf.position() < contentBuf.limit()) {
 						return;
 					} else {
-						ServerExecute execute = new ServerExecute(key, executorService, serviceHandle, contentBuf.array());
+						execute.setKey(key);
+						execute.setRequestByte(contentBuf.array());
 						executorService.execute(execute);
 						contentBuf = null;
 						return;
