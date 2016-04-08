@@ -20,12 +20,12 @@ class BioConnection implements Connection {
 	private InputStream inputStream;
 	private String host;
 	private int port;
-	private int soTimeout = 30;
+	private int soTimeoutMillis;
 
-	public BioConnection(String host, int port, int soTimeout) {
+	public BioConnection(String host, int port, int soTimeoutMillis) {
 		this.host = host;
 		this.port = port;
-		this.soTimeout = soTimeout;
+		this.soTimeoutMillis = soTimeoutMillis;
 		init();
 	}
 
@@ -33,7 +33,7 @@ class BioConnection implements Connection {
 		for (int i = 0; i < 4; i++) {
 			try {
 				socket = new Socket(host, port);
-				socket.setSoTimeout(soTimeout * 1000);
+				socket.setSoTimeout(soTimeoutMillis);
 				outputStream = socket.getOutputStream();
 				inputStream = socket.getInputStream();
 				return;

@@ -10,31 +10,22 @@ final class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 
 	private String servers; // 服务地址
 
-	private int soTimeout; // 链接超时 单位秒
-
-	private int ioMode;
+	private int soTimeoutMillis; // 链接超时
 
 	private static Random random = new Random();
 
 	@Override
 	public Connection create() throws Exception {
 		String[] hosts = servers.split(",");
-
 		String server = hosts[random.nextInt(hosts.length)].trim();
 		String ce[] = server.split(":");
-		Connection connection;
-		if (ioMode == Client.BIO) {
-			connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
-		} else {
-			connection = new NioConnection(ce[0], Integer.parseInt(ce[1]), soTimeout);
-		}
+		Connection connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeoutMillis);
 		return connection;
 	}
 
-	public ConnectionPoolFactory(String servers, int soTimeout, int ioMode) {
+	public ConnectionPoolFactory(String servers, int soTimeoutMillis, int ioMode) {
 		this.servers = servers;
-		this.soTimeout = soTimeout;
-		this.ioMode = ioMode;
+		this.soTimeoutMillis = soTimeoutMillis;
 	}
 
 	@Override

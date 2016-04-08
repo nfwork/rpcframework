@@ -19,7 +19,7 @@ public class Client {
 
 	private int minIdle = 5;
 
-	private int soTimeout = 30; // 链接超时 单位秒
+	private int soTimeoutMillis = 30 * 1000;
 
 	private int status = 0; // 0初始状态 1已初始化 2 已销毁
 
@@ -49,7 +49,7 @@ public class Client {
 		poolConfig.setNumTestsPerEvictionRun(10);
 		AbandonedConfig abandonedConfig = new AbandonedConfig();
 
-		ConnectionPoolFactory factory = new ConnectionPoolFactory(servers, soTimeout, ioMode);
+		ConnectionPoolFactory factory = new ConnectionPoolFactory(servers, soTimeoutMillis, ioMode);
 		pool = new GenericObjectPool<Connection>(factory, poolConfig, abandonedConfig);
 	}
 
@@ -62,7 +62,6 @@ public class Client {
 		pool.close();
 	}
 
-
 	public Response call(Request request) throws Exception {
 		if (request == null || request.getServiceName() == null) {
 			throw new RuntimeException("request or request servciename cannot be null");
@@ -74,7 +73,7 @@ public class Client {
 		try {
 			connection = pool.borrowObject();
 			return connection.call(request);
-		}catch (SocketException e) {
+		} catch (SocketException e) {
 			connection.close();
 			throw e;
 		} finally {
@@ -92,12 +91,20 @@ public class Client {
 		this.servers = servers;
 	}
 
-	public int getSoTimeout() {
-		return soTimeout;
+	public void setSoTimeout(int soTimeout) {
+		this.soTimeoutMillis = soTimeout * 1000;
 	}
 
-	public void setSoTimeout(int soTimeout) {
-		this.soTimeout = soTimeout;
+	public int getSoTimeout() {
+		return this.soTimeoutMillis / 1000;
+	}
+
+	public int getSoTimeoutMillis() {
+		return soTimeoutMillis;
+	}
+
+	public void setSoTimeoutMillis(int soTimeoutMillis) {
+		this.soTimeoutMillis = soTimeoutMillis;
 	}
 
 	public int getIoMode() {
@@ -131,5 +138,5 @@ public class Client {
 	public void setMinIdle(int minIdle) {
 		this.minIdle = minIdle;
 	}
-	
+
 }
