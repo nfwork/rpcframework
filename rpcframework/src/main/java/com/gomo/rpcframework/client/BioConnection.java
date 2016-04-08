@@ -61,7 +61,6 @@ class BioConnection implements Connection {
 		int index = 0;
 		byte blenght[] = new byte[4];
 
-		index = inputStream.read(blenght);
 		do {
 			int read = inputStream.read(blenght, index, (4 - index));
 			if (read == -1) {
