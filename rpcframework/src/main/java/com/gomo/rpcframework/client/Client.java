@@ -71,7 +71,9 @@ public class Client {
 		}
 		Connection connection = null;
 		try {
-			connection = pool.borrowObject();
+			synchronized (this) {
+				connection = pool.borrowObject();
+			}
 			return connection.call(request);
 		} catch (SocketException e) {
 			connection.close();
