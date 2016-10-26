@@ -1,7 +1,5 @@
 package com.gomo.rpcframework.client;
 
-import java.net.SocketException;
-
 import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -71,11 +69,9 @@ public class Client {
 		}
 		Connection connection = null;
 		try {
-			synchronized (this) {
-				connection = pool.borrowObject();
-			}
+			connection = pool.borrowObject();
 			return connection.call(request);
-		} catch (SocketException e) {
+		} catch (Exception e) {
 			connection.close();
 			throw e;
 		} finally {
