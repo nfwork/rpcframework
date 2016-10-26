@@ -105,14 +105,12 @@ public class Server implements Runnable {
 						ServerReader serverReader = (ServerReader) key.attachment();
 						serverReader.setKey(key);
 						key.interestOps(key.interestOps()&(~SelectionKey.OP_READ));
-						serverReader.run();
 						executorService.execute(serverReader);
 					} else if(key.isWritable()){
 						ServerReader serverReader = (ServerReader) key.attachment();
 						ServerWriter serverWriter = serverReader.getWriter();
 						serverWriter.setKey(key);
 						key.interestOps(key.interestOps()&(~SelectionKey.OP_WRITE));
-						serverWriter.run();
 						executorService.execute(serverWriter);
 					}
 				} catch (NoDataException e) {
