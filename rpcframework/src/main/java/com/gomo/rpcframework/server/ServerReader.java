@@ -3,7 +3,6 @@ package com.gomo.rpcframework.server;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.ExecutorService;
 
 import com.gomo.rpcframework.RPCConfig;
 import com.gomo.rpcframework.exception.DatagramFormatException;
@@ -16,18 +15,17 @@ class ServerReader implements Runnable {
 	private SelectionKey key;
 	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
 	private ByteBuffer contentBuf;
-	private ExecutorService executorService;
 	private ServerExecute execute;
+	private ServerWriter writer;
 	
 
-	public ServerReader(ExecutorService executorService, ServiceHandle serviceHandle) {
-		this.executorService = executorService;
-		execute = new ServerExecute(executorService, serviceHandle);
+	public ServerReader(ServiceHandle serviceHandle) {
+		execute = new ServerExecute(serviceHandle);
+		writer = new ServerWriter();
 	}
-
+	
 	public void run() {
 		try {
-
 			SocketChannel channel = (SocketChannel) key.channel();
 			int index = 0;
 
@@ -35,6 +33,8 @@ class ServerReader implements Runnable {
 			if (contentBuf == null) {
 				while ((index = channel.read(headerBuf)) > 0) {
 					if (headerBuf.position() < 5) {
+						key.interestOps(key.interestOps() | SelectionKey.OP_READ);
+						key.selector().wakeup();
 						return;
 					} else {
 						byte[] data = headerBuf.array();
@@ -60,12 +60,15 @@ class ServerReader implements Runnable {
 			if (contentBuf != null) {
 				while ((index = channel.read(contentBuf)) > 0) {
 					if (contentBuf.position() < contentBuf.limit()) {
+						key.interestOps(key.interestOps() | SelectionKey.OP_READ);
+						key.selector().wakeup();
 						return;
 					} else {
-						execute.setKey(key);
-						execute.setRequestByte(contentBuf.array());
-						executorService.execute(execute);
+						byte[] resByte= execute.execute(contentBuf.array());
+						writer.setResponseByte(resByte);
 						contentBuf = null;
+						key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+						key.selector().wakeup();
 						return;
 					}
 				}
@@ -78,18 +81,9 @@ class ServerReader implements Runnable {
 		} catch (Exception e) {
 			Server.closeChannel(key);
 			RPCLog.error("server reader run error", e);
-		} finally {
-			wakeup(key);
 		}
 	}
 
-	private void wakeup(SelectionKey key) {
-		try {
-			key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-			key.selector().wakeup();
-		} catch (Exception e) {
-		}
-	}
 
 	public SelectionKey getKey() {
 		return key;
@@ -99,4 +93,8 @@ class ServerReader implements Runnable {
 		this.key = key;
 	}
 
+	public ServerWriter getWriter() {
+		return writer;
+	}
+	
 }

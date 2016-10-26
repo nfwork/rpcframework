@@ -3,19 +3,13 @@ package com.gomo.rpcframework.server;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.ExecutorService;
 
 import com.gomo.rpcframework.util.RPCLog;
 
 class ServerWriter implements Runnable {
 
 	private SelectionKey key;
-	private ExecutorService executorService;
 	private ByteBuffer byteBuffer;
-
-	public ServerWriter(ExecutorService executorService) {
-		this.executorService = executorService;
-	}
 
 	public void run() {
 		try {
@@ -23,8 +17,11 @@ class ServerWriter implements Runnable {
 			if (channel.isOpen()) {
 				channel.write(byteBuffer);
 				if (byteBuffer.position() < byteBuffer.limit()) {
-					executorService.execute(this);
+					key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+				} else {
+					key.interestOps(key.interestOps() | SelectionKey.OP_READ);
 				}
+				key.selector().wakeup();
 			}
 		} catch (Exception e) {
 			Server.closeChannel(key);
@@ -39,5 +36,5 @@ class ServerWriter implements Runnable {
 	public void setResponseByte(byte[] data) {
 		this.byteBuffer = ByteBuffer.wrap(data);
 	}
-	
+
 }
