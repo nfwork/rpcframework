@@ -84,42 +84,43 @@ public class Server implements Runnable {
 		while (status == 1) {
 			try {
 				this.selector.select();
-
-				// 返回此选择器的已选择键集
-				Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();
-				
-				while (selectorKeys.hasNext()) {
-					SelectionKey key = selectorKeys.next();
-					selectorKeys.remove();
-					try {
-						if (!key.isValid()) {
-							continue;
-						}
-						if (key.isAcceptable()) {
-							this.accept(key);
-						} else if (key.isReadable()) {
-							ServerReader serverReader = (ServerReader) key.attachment();
-							serverReader.setKey(key);
-							key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
-							executorService.execute(serverReader);
-						} else if (key.isWritable()) {
-							ServerReader serverReader = (ServerReader) key.attachment();
-							ServerWriter serverWriter = serverReader.getWriter();
-							serverWriter.setKey(key);
-							key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
-							executorService.execute(serverWriter);
-						}
-					} catch (NoDataException e) {
-						closeChannel(key);
-					} catch (Exception e) {
-						closeChannel(key);
-						RPCLog.error("server runtime excetion", e);
-					}
-				}
-
 			} catch (IOException e) {
 				RPCLog.error("server select error", e);
+				continue;
 			}
+			
+			// 返回此选择器的已选择键集
+			Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();
+
+			while (selectorKeys.hasNext()) {
+				SelectionKey key = selectorKeys.next();
+				selectorKeys.remove();
+				try {
+					if (!key.isValid()) {
+						continue;
+					}
+					if (key.isAcceptable()) {
+						this.accept(key);
+					} else if (key.isReadable()) {
+						ServerReader serverReader = (ServerReader) key.attachment();
+						serverReader.setKey(key);
+						key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
+						executorService.execute(serverReader);
+					} else if (key.isWritable()) {
+						ServerReader serverReader = (ServerReader) key.attachment();
+						ServerWriter serverWriter = serverReader.getWriter();
+						serverWriter.setKey(key);
+						key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
+						executorService.execute(serverWriter);
+					}
+				} catch (NoDataException e) {
+					closeChannel(key);
+				} catch (Exception e) {
+					closeChannel(key);
+					RPCLog.error("server runtime excetion", e);
+				}
+			}
+
 		}
 	}
 
