@@ -1,6 +1,7 @@
 package com.gomo.rpcframework.server;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -14,6 +15,13 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode;
+import org.apache.curator.framework.recipes.nodes.PersistentEphemeralNode.Mode;
+import org.apache.curator.retry.RetryNTimes;
+import org.apache.zookeeper.data.Stat;
+
 import com.gomo.rpcframework.exception.NoDataException;
 import com.gomo.rpcframework.util.RPCLog;
 
@@ -23,10 +31,15 @@ public class Server implements Runnable {
 	private int minWorkerNum = 10;
 	private int maxWorkerNum = 100;
 	private ServerSocketChannel serversocket;
+	private String zkHosts;
 	private Selector selector;
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle = new ServiceHandle();
 	private int status = 0;// 0初始状态 1已初始化 2 已销毁
+
+	private static final String ZK_PATH = "/rpcframework";
+	private CuratorFramework client;
+	private PersistentEphemeralNode node;
 
 	public void registService(String serviceName, Service service) {
 		serviceHandle.regist(serviceName, service);
@@ -51,20 +64,57 @@ public class Server implements Runnable {
 			Thread thread = new Thread(this);
 			thread.setName("RPCServer-Main");
 			thread.start();
+			startZK();
 			RPCLog.info("server started service on port:" + port);
 		} catch (Exception e) {
 			RPCLog.error("server start error", e);
 		}
 	}
 
+	private void startZK() throws Exception {
+		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
+		client.start();
+		Stat stat = client.checkExists().forPath(ZK_PATH);
+
+		if (stat == null) {
+			client.create().creatingParentsIfNeeded().forPath(ZK_PATH);
+		} 
+
+		InetAddress addr = InetAddress.getLocalHost();
+		String ip = addr.getHostAddress().toString();
+		String serverAddress = ip + ":" + port;
+		node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, ZK_PATH + "/" + serverAddress, serverAddress.getBytes("utf-8"));
+		node.start();
+	}
+
 	public void stop() {
 		status = 2;
+
 		try {
-			serversocket.close();
-		} catch (IOException e) {
-			RPCLog.error("server stop error", e);
+			if (node != null) {
+				node.close();
+			}
+		} catch (Exception e) {
 		}
-		executorService.shutdown();
+
+		try {
+			if (client != null) {
+				client.close();
+			}
+		} catch (Exception e) {
+		}
+
+		try {
+			if (serversocket != null) {
+				serversocket.close();
+			}
+		} catch (Exception e) {
+		}
+
+		if (executorService != null) {
+			executorService.shutdown();
+		}
+
 	}
 
 	/**
@@ -88,7 +138,7 @@ public class Server implements Runnable {
 				RPCLog.error("server select error", e);
 				continue;
 			}
-			
+
 			// 返回此选择器的已选择键集
 			Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();
 
@@ -159,4 +209,8 @@ public class Server implements Runnable {
 		this.maxWorkerNum = maxWorkerNum;
 	}
 
+	public void setZkHosts(String zkHosts) {
+		this.zkHosts = zkHosts;
+	}
+	
 }

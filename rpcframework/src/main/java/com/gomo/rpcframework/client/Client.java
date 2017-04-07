@@ -1,5 +1,6 @@
 package com.gomo.rpcframework.client;
 
+import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -10,6 +11,8 @@ import com.gomo.rpcframework.Response;
 public class Client {
 
 	private String servers = "127.0.0.1:8090"; // 服务地址
+	
+	private String zkHosts;
 
 	private int maxTotal = 100; // 链接数量
 
@@ -28,6 +31,8 @@ public class Client {
 	public static final int BIO = 0;
 
 	GenericObjectPool<Connection> pool;
+	
+	BasePooledObjectFactory<Connection> factory;
 
 	public synchronized void init() {
 		if (status != 0) {
@@ -47,15 +52,26 @@ public class Client {
 		poolConfig.setNumTestsPerEvictionRun(10);
 		AbandonedConfig abandonedConfig = new AbandonedConfig();
 
-		ConnectionPoolFactory factory = new ConnectionPoolFactory(servers, soTimeoutMillis, ioMode);
+		if (zkHosts!=null && zkHosts.equals("")==false) {
+			factory= new ZKConnectionPoolFactory(zkHosts, soTimeoutMillis, ioMode);
+			((ZKConnectionPoolFactory)factory).startZK();;
+		}else
+		{
+			factory= new ConnectionPoolFactory(servers, soTimeoutMillis, ioMode);
+		}
+		
 		pool = new GenericObjectPool<Connection>(factory, poolConfig, abandonedConfig);
 	}
 
 	public synchronized void destory() {
+		
 		if (status != 1) {
 			throw new RuntimeException("client is not init or aready destory");
 		} else {
 			status = 2;
+		}
+		if (factory instanceof ZKConnectionPoolFactory) {
+			((ZKConnectionPoolFactory)factory).closeZK();
 		}
 		pool.close();
 	}
@@ -79,6 +95,14 @@ public class Client {
 				pool.returnObject(connection);
 			}
 		}
+	}
+
+	public String getZkHosts() {
+		return zkHosts;
+	}
+
+	public void setZkHosts(String zkHosts) {
+		this.zkHosts = zkHosts;
 	}
 
 	public String getServers() {
