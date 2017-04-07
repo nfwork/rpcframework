@@ -11,6 +11,8 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.RetryNTimes;
 
+import com.gomo.rpcframework.util.RPCLog;
+
 class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 
 	private CuratorFramework client;
@@ -41,6 +43,8 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+		
+		RPCLog.info("connect zookeeper success, zkHosts:" + zkHosts + " , zkPath:" + zkPath);
 
 	}
 

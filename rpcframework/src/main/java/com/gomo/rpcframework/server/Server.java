@@ -68,10 +68,10 @@ public class Server implements Runnable {
 			Thread thread = new Thread(this);
 			thread.setName("RPCServer-Main");
 			thread.start();
-			startZK();
 			RPCLog.info("server started service on port:" + port);
+			startZK();
 		} catch (Exception e) {
-			RPCLog.error("server start error", e);
+			throw new RuntimeException("server start error", e);
 		}
 	}
 
@@ -88,8 +88,10 @@ public class Server implements Runnable {
 			InetAddress addr = InetAddress.getLocalHost();
 			String ip = addr.getHostAddress().toString();
 			String serverAddress = ip + ":" + port;
-			node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, getZkPath() + "/" + serverAddress, serverAddress.getBytes("utf-8"));
+			String zkPath = getZkPath() + "/" + serverAddress;
+			node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, zkPath, serverAddress.getBytes("utf-8"));
 			node.start();
+			RPCLog.info("service regist success, zkHosts:" + zkHosts + ", zkPath:" + zkPath);
 		}
 	}
 
