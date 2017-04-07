@@ -56,7 +56,7 @@ public class Client {
 		poolConfig.setNumTestsPerEvictionRun(10);
 		AbandonedConfig abandonedConfig = new AbandonedConfig();
 
-		if (zkHosts != null && zkHosts.equals("") == false) {
+		if (zkHosts != null && zkHosts.trim().equals("") == false) {
 			factory = new ZKConnectionPoolFactory(soTimeoutMillis, ioMode);
 			((ZKConnectionPoolFactory) factory).startZK(zkHosts, getZkPath());
 		} else {

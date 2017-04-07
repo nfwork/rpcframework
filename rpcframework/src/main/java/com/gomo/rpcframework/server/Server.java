@@ -76,19 +76,21 @@ public class Server implements Runnable {
 	}
 
 	private void startZK() throws Exception {
-		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
-		client.start();
-		Stat stat = client.checkExists().forPath(getZkPath());
+		if (zkHosts != null && zkHosts.trim().equals("") == false) {
+			client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
+			client.start();
+			Stat stat = client.checkExists().forPath(getZkPath());
 
-		if (stat == null) {
-			client.create().creatingParentsIfNeeded().forPath(getZkPath());
+			if (stat == null) {
+				client.create().creatingParentsIfNeeded().forPath(getZkPath());
+			}
+
+			InetAddress addr = InetAddress.getLocalHost();
+			String ip = addr.getHostAddress().toString();
+			String serverAddress = ip + ":" + port;
+			node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, getZkPath() + "/" + serverAddress, serverAddress.getBytes("utf-8"));
+			node.start();
 		}
-
-		InetAddress addr = InetAddress.getLocalHost();
-		String ip = addr.getHostAddress().toString();
-		String serverAddress = ip + ":" + port;
-		node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, getZkPath() + "/" + serverAddress, serverAddress.getBytes("utf-8"));
-		node.start();
 	}
 
 	private String getZkPath() {
