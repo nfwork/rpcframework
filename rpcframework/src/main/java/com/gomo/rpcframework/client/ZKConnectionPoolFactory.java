@@ -23,7 +23,7 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		super(soTimeoutMillis, ioMode);
 	}
 
-	public void startZK(String zkHosts,String zkPath) {
+	public void startZK(final String zkHosts, final String zkPath) {
 		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
 		client.start();
 
@@ -33,6 +33,7 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 			public void childEvent(CuratorFramework client1, PathChildrenCacheEvent event) throws Exception {
 				List<ChildData> childDatas = watcher.getCurrentData();
 				servers = getServers(childDatas);
+				RPCLog.info("zk service node changed, zkHosts:" + zkHosts + ", zkPath:" + zkPath + ", current node:" + servers);
 			}
 		});
 
@@ -43,8 +44,8 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
-		RPCLog.info("connect zookeeper success, zkHosts:" + zkHosts + " , zkPath:" + zkPath);
+
+		RPCLog.info("connect zookeeper success, zkHosts:" + zkHosts + ", zkPath:" + zkPath + ", current node:" + servers);
 
 	}
 
