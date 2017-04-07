@@ -27,8 +27,6 @@ final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> 
 
 	private static Random random = new Random();
 
-	private static final String ZK_PATH = "/rpcframework";
-
 	private CuratorFramework client;
 
 	private PathChildrenCache watcher;
@@ -50,11 +48,11 @@ final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> 
 		this.soTimeoutMillis = soTimeoutMillis;
 	}
 
-	public void startZK() {
+	public void startZK(String zkPath) {
 		client = CuratorFrameworkFactory.newClient(zkServers, new RetryNTimes(10, 5000));
 		client.start();
 
-		watcher = new PathChildrenCache(client, ZK_PATH, true);
+		watcher = new PathChildrenCache(client, zkPath, true);
 
 		watcher.getListenable().addListener(new PathChildrenCacheListener() {
 			public void childEvent(CuratorFramework client1, PathChildrenCacheEvent event) throws Exception {

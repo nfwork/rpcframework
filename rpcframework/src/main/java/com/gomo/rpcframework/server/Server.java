@@ -31,13 +31,17 @@ public class Server implements Runnable {
 	private int minWorkerNum = 10;
 	private int maxWorkerNum = 100;
 	private ServerSocketChannel serversocket;
-	private String zkHosts;
+
 	private Selector selector;
 	private ExecutorService executorService;
 	private ServiceHandle serviceHandle = new ServiceHandle();
 	private int status = 0;// 0初始状态 1已初始化 2 已销毁
 
-	private static final String ZK_PATH = "/rpcframework";
+	private static final String ZK_BASE_PATH = "/rpcframework";
+
+	private String zkServiceName = "default";
+	private String zkHosts;
+
 	private CuratorFramework client;
 	private PersistentEphemeralNode node;
 
@@ -74,17 +78,25 @@ public class Server implements Runnable {
 	private void startZK() throws Exception {
 		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
 		client.start();
-		Stat stat = client.checkExists().forPath(ZK_PATH);
+		Stat stat = client.checkExists().forPath(getZkPath());
 
 		if (stat == null) {
-			client.create().creatingParentsIfNeeded().forPath(ZK_PATH);
-		} 
+			client.create().creatingParentsIfNeeded().forPath(getZkPath());
+		}
 
 		InetAddress addr = InetAddress.getLocalHost();
 		String ip = addr.getHostAddress().toString();
 		String serverAddress = ip + ":" + port;
-		node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, ZK_PATH + "/" + serverAddress, serverAddress.getBytes("utf-8"));
+		node = new PersistentEphemeralNode(client, Mode.EPHEMERAL, getZkPath() + "/" + serverAddress, serverAddress.getBytes("utf-8"));
 		node.start();
+	}
+
+	private String getZkPath() {
+		if (zkServiceName != null && zkServiceName.equals("") == false) {
+			return ZK_BASE_PATH + "/" + zkServiceName;
+		} else {
+			return ZK_BASE_PATH;
+		}
 	}
 
 	public void stop() {
@@ -212,5 +224,13 @@ public class Server implements Runnable {
 	public void setZkHosts(String zkHosts) {
 		this.zkHosts = zkHosts;
 	}
-	
+
+	public String getZkServiceName() {
+		return zkServiceName;
+	}
+
+	public void setZkServiceName(String zkServiceName) {
+		this.zkServiceName = zkServiceName;
+	}
+
 }
