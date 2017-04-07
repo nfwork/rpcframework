@@ -53,7 +53,6 @@ final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> 
 	public void startZK() {
 		client = CuratorFrameworkFactory.newClient(zkServers, new RetryNTimes(10, 5000));
 		client.start();
-		System.out.println("zk client start successfully!");
 
 		watcher = new PathChildrenCache(client, ZK_PATH, true);
 
