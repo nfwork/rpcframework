@@ -23,8 +23,8 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		super(soTimeoutMillis, ioMode);
 	}
 
-	public void startZK(final String zkHosts, final String zkPath) {
-		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
+	public void startZK(final String zkHosts, final String zkPath, final int zkRetryTimes) {
+		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(zkRetryTimes, 5000));
 		client.start();
 
 		watcher = new PathChildrenCache(client, zkPath, true);

@@ -128,7 +128,7 @@ public class Server implements Runnable {
 			}
 		} catch (Exception e) {
 		}
-		
+
 		try {
 			if (serversocket != null) {
 				serversocket.close();
@@ -164,10 +164,10 @@ public class Server implements Runnable {
 				continue;
 			}
 
-			if (this.selector.isOpen()==false) {
+			if (this.selector.isOpen() == false) {
 				break;
 			}
-			
+
 			// 返回此选择器的已选择键集
 			Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();
 
@@ -257,5 +257,5 @@ public class Server implements Runnable {
 	public void setZkRetryTimes(int zkRetryTimes) {
 		this.zkRetryTimes = zkRetryTimes;
 	}
-	
+
 }

@@ -12,10 +12,6 @@ public class Client {
 
 	private String servers = "127.0.0.1:8090"; // 服务地址
 
-	private String zkHosts;
-
-	private String zkServiceName = "default";
-
 	private int maxTotal = 100; // 链接数量
 
 	private int maxIdle = 10;
@@ -38,6 +34,10 @@ public class Client {
 
 	private static final String ZK_BASE_PATH = "/rpcframework";
 
+	private int zkRetryTimes = 10;
+	private String zkServiceName = "default";
+	private String zkHosts;
+
 	public synchronized void init() {
 		if (status != 0) {
 			throw new RuntimeException("client has inited");
@@ -58,7 +58,7 @@ public class Client {
 
 		if (zkHosts != null && zkHosts.trim().equals("") == false) {
 			factory = new ZKConnectionPoolFactory(soTimeoutMillis, ioMode);
-			((ZKConnectionPoolFactory) factory).startZK(zkHosts, getZkPath());
+			((ZKConnectionPoolFactory) factory).startZK(zkHosts, getZkPath(), zkRetryTimes);
 		} else {
 			factory = new ConnectionPoolFactory(servers, soTimeoutMillis, ioMode);
 		}
@@ -181,6 +181,14 @@ public class Client {
 
 	public void setZkServiceName(String zkServiceName) {
 		this.zkServiceName = zkServiceName;
+	}
+
+	public int getZkRetryTimes() {
+		return zkRetryTimes;
+	}
+
+	public void setZkRetryTimes(int zkRetryTimes) {
+		this.zkRetryTimes = zkRetryTimes;
 	}
 
 }
