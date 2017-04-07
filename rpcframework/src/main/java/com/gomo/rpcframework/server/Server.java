@@ -41,6 +41,7 @@ public class Server implements Runnable {
 
 	private String zkServiceName = "default";
 	private String zkHosts;
+	private int zkRetryTimes = 10;
 
 	private CuratorFramework client;
 	private PersistentEphemeralNode node;
@@ -71,13 +72,14 @@ public class Server implements Runnable {
 			RPCLog.info("server started service on port:" + port);
 			startZK();
 		} catch (Exception e) {
+			stop();
 			throw new RuntimeException("server start error", e);
 		}
 	}
 
 	private void startZK() throws Exception {
 		if (zkHosts != null && zkHosts.trim().equals("") == false) {
-			client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
+			client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(zkRetryTimes, 5000));
 			client.start();
 			Stat stat = client.checkExists().forPath(getZkPath());
 
@@ -237,4 +239,12 @@ public class Server implements Runnable {
 		this.zkServiceName = zkServiceName;
 	}
 
+	public int getZkRetryTimes() {
+		return zkRetryTimes;
+	}
+
+	public void setZkRetryTimes(int zkRetryTimes) {
+		this.zkRetryTimes = zkRetryTimes;
+	}
+	
 }
