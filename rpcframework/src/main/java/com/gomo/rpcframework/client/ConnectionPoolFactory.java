@@ -6,11 +6,11 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
-final class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
+class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 
-	private String servers; // 服务地址
+	String servers; // 服务地址
 
-	private int soTimeoutMillis; // 链接超时
+	int soTimeoutMillis; // 链接超时
 
 	private static Random random = new Random();
 
@@ -21,6 +21,10 @@ final class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 		String ce[] = server.split(":");
 		Connection connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeoutMillis);
 		return connection;
+	}
+
+	public ConnectionPoolFactory(int soTimeoutMillis, int ioMode) {
+		this.soTimeoutMillis = soTimeoutMillis;
 	}
 
 	public ConnectionPoolFactory(String servers, int soTimeoutMillis, int ioMode) {
@@ -47,6 +51,10 @@ final class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 		} else {
 			return false;
 		}
+	}
+
+	public String getServers() {
+		return servers;
 	}
 
 }

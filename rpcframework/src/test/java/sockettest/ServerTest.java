@@ -9,7 +9,8 @@ public class ServerTest {
 
 	public static void main(String[] args) {
 		Server server = new Server();
-		server.setPort(8090);
+		server.setPort(8091);
+		server.setZkHosts("10.10.1.80:2181");
 		server.registService("helloService", new HelloService());
 		server.start();
 	}

@@ -1,11 +1,7 @@
 package com.gomo.rpcframework.client;
 
 import java.util.List;
-import java.util.Random;
 
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -15,41 +11,18 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.RetryNTimes;
 
-import com.gomo.rpcframework.exception.ServiceUnavailableException;
-
-final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
-
-	private String zkServers; // ZK服务地址
-
-	private String servers; // 服务地址
-
-	private int soTimeoutMillis; // 链接超时
-
-	private static Random random = new Random();
+class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 
 	private CuratorFramework client;
 
 	private PathChildrenCache watcher;
 
-	@Override
-	public Connection create() throws Exception {
-		if (servers==null || servers.equals("")) {
-			throw new ServiceUnavailableException("service not found in zookeeper");
-		}
-		String[] hosts = servers.split(",");
-		String server = hosts[random.nextInt(hosts.length)].trim();
-		String ce[] = server.split(":");
-		Connection connection = new BioConnection(ce[0], Integer.parseInt(ce[1]), soTimeoutMillis);
-		return connection;
+	public ZKConnectionPoolFactory(int soTimeoutMillis, int ioMode) {
+		super(soTimeoutMillis, ioMode);
 	}
 
-	public ZKConnectionPoolFactory(String zkServers, int soTimeoutMillis, int ioMode) {
-		this.zkServers = zkServers;
-		this.soTimeoutMillis = soTimeoutMillis;
-	}
-
-	public void startZK(String zkPath) {
-		client = CuratorFrameworkFactory.newClient(zkServers, new RetryNTimes(10, 5000));
+	public void startZK(String zkHosts,String zkPath) {
+		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(10, 5000));
 		client.start();
 
 		watcher = new PathChildrenCache(client, zkPath, true);
@@ -71,7 +44,7 @@ final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> 
 
 	}
 
-	public void closeZK() {
+	public void stopZK() {
 		try {
 			watcher.close();
 		} catch (Exception e) {
@@ -95,25 +68,7 @@ final class ZKConnectionPoolFactory extends BasePooledObjectFactory<Connection> 
 		return serversTmp;
 	}
 
-	@Override
-	public void destroyObject(PooledObject<Connection> p) throws Exception {
-		if (p != null && p.getObject() != null) {
-			p.getObject().close();
-		}
+	public String getServers() {
+		return servers;
 	}
-
-	@Override
-	public PooledObject<Connection> wrap(Connection obj) {
-		return new DefaultPooledObject<Connection>(obj);
-	}
-
-	@Override
-	public boolean validateObject(PooledObject<Connection> p) {
-		if (p != null && p.getObject() != null) {
-			return p.getObject().validate();
-		} else {
-			return false;
-		}
-	}
-
 }
