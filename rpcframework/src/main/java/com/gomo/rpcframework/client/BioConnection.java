@@ -21,10 +21,12 @@ class BioConnection implements Connection {
 	private String host;
 	private int port;
 	private int soTimeoutMillis;
+	private String remoteAddress;
 
 	public BioConnection(String host, int port, int soTimeoutMillis) {
 		this.host = host;
 		this.port = port;
+		this.remoteAddress = host + ":" + port;
 		this.soTimeoutMillis = soTimeoutMillis;
 		init();
 	}
@@ -111,5 +113,10 @@ class BioConnection implements Connection {
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public String getRemoteAddress() {
+		return remoteAddress;
 	}
 }

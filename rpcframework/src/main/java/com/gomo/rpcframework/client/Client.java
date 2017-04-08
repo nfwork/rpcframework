@@ -86,15 +86,17 @@ public class Client {
 		if (status != 1) {
 			throw new RuntimeException("client is not init or aready destory");
 		}
-		if (factory.getServers() == null || factory.getServers().equals("")) {
-			throw new ServiceUnavailableException("sesrvice is unavailable, zkHosts:" + zkHosts + ", zkServiceName:" + zkServiceName);
+		if (factory.isUnavaliable()) {
+			throw new ServiceUnavailableException("service is unavailable, zkHosts:" + zkHosts + ", zkServiceName:" + zkServiceName);
 		}
 		Connection connection = null;
 		try {
 			connection = pool.borrowObject();
 			return connection.call(request);
 		} catch (Exception e) {
-			connection.close();
+			if (connection != null) {
+				connection.close();
+			}
 			throw e;
 		} finally {
 			if (connection != null) {

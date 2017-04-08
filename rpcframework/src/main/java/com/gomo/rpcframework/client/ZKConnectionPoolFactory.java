@@ -1,7 +1,11 @@
 package com.gomo.rpcframework.client;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.pool2.PooledObject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -19,6 +23,8 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 
 	private PathChildrenCache watcher;
 
+	private Set<String> serviceNodeSet = new HashSet<String>();
+
 	public ZKConnectionPoolFactory(int soTimeoutMillis, int ioMode) {
 		super(soTimeoutMillis, ioMode);
 	}
@@ -32,7 +38,7 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		watcher.getListenable().addListener(new PathChildrenCacheListener() {
 			public void childEvent(CuratorFramework client1, PathChildrenCacheEvent event) throws Exception {
 				List<ChildData> childDatas = watcher.getCurrentData();
-				servers = getServers(childDatas);
+				refreshServers(childDatas);
 				RPCLog.info("zk service node changed, zkHosts:" + zkHosts + ", zkPath:" + zkPath + ", current node:" + servers);
 			}
 		});
@@ -40,7 +46,7 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 		try {
 			watcher.start(StartMode.BUILD_INITIAL_CACHE);
 			List<ChildData> childDatas = watcher.getCurrentData();
-			servers = getServers(childDatas);
+			refreshServers(childDatas);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -61,19 +67,37 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 
 	}
 
-	private String getServers(List<ChildData> childDatas) throws Exception {
+	private void refreshServers(List<ChildData> childDatas) throws Exception {
 		String serversTmp = "";
 		for (ChildData childData : childDatas) {
+			String value = new String(childData.getData(), "utf-8").trim();
 			if (serversTmp.equals("")) {
-				serversTmp = new String(childData.getData(), "utf-8");
+				serversTmp = value;
 			} else {
-				serversTmp = serversTmp + "," + new String(childData.getData(), "utf-8");
+				serversTmp = serversTmp + "," + value;
 			}
 		}
-		return serversTmp;
+
+		Set<String> nodeSetTmp = new HashSet<String>();
+		if (serversTmp.equals("") == false) {
+			Collections.addAll(nodeSetTmp, serversTmp.split(","));
+		}
+
+		this.servers = serversTmp;
+		this.serviceNodeSet = nodeSetTmp;
 	}
 
-	public String getServers() {
-		return servers;
+	@Override
+	public boolean validateObject(PooledObject<Connection> p) {
+		if (serviceNodeSet.contains(p.getObject().getRemoteAddress())) {
+			return super.validateObject(p);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isUnavaliable() {
+		return serviceNodeSet.isEmpty();
 	}
 }

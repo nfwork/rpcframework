@@ -14,4 +14,6 @@ interface Connection {
 	public void close();
 	
 	public boolean validate();
+	
+	public String getRemoteAddress();
 }

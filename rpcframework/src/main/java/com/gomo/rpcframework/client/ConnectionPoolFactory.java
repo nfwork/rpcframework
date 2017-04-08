@@ -6,6 +6,8 @@ import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
+import com.gomo.rpcframework.exception.ServiceUnavailableException;
+
 class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 
 	String servers; // 服务地址
@@ -16,6 +18,9 @@ class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 
 	@Override
 	public Connection create() throws Exception {
+		if (isUnavaliable()) {
+			throw new ServiceUnavailableException("service is unavailable, servers is null");
+		}
 		String[] hosts = servers.split(",");
 		String server = hosts[random.nextInt(hosts.length)].trim();
 		String ce[] = server.split(":");
@@ -53,8 +58,12 @@ class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 		}
 	}
 
-	public String getServers() {
-		return servers;
+	public boolean isUnavaliable() {
+		if (servers == null || "".equals(servers)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }
