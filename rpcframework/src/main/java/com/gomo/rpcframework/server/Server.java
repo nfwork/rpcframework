@@ -151,8 +151,8 @@ public class Server implements Runnable {
 		ServerSocketChannel server = (ServerSocketChannel) key.channel();
 		SocketChannel clientchannel = server.accept();
 		clientchannel.configureBlocking(false);
-		ServerReader serverExecute = new ServerReader(serviceHandle);
-		clientchannel.register(this.selector, SelectionKey.OP_READ, serverExecute);
+		ServerReader serverReader = new ServerReader(serviceHandle);
+		clientchannel.register(this.selector, SelectionKey.OP_READ, serverReader);
 	}
 
 	public void run() {
