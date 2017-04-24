@@ -15,7 +15,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.RetryNTimes;
 
-import com.gomo.rpcframework.exception.ServiceUnavailableException;
 import com.gomo.rpcframework.util.RPCLog;
 
 class ZKConnectionPoolFactory extends ConnectionPoolFactory {
@@ -24,10 +23,6 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 
 	private PathChildrenCache watcher;
 
-	private String zkHosts;
-
-	private String zkPath;
-
 	private Set<String> serviceNodeSet = new HashSet<String>();
 
 	public ZKConnectionPoolFactory(int soTimeoutMillis, int ioMode) {
@@ -35,9 +30,6 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 	}
 
 	public void startZK(final String zkHosts, final String zkPath, final int zkRetryTimes) {
-		this.zkHosts = zkHosts;
-		this.zkPath = zkPath;
-
 		client = CuratorFrameworkFactory.newClient(zkHosts, new RetryNTimes(zkRetryTimes, 5000));
 		client.start();
 
@@ -105,9 +97,7 @@ class ZKConnectionPoolFactory extends ConnectionPoolFactory {
 	}
 
 	@Override
-	public void checkFactory() {
-		if (serviceNodeSet.isEmpty()) {
-			throw new ServiceUnavailableException("service is unavailable, zkHosts:" + zkHosts + ", zkPath:" + zkPath);
-		}
+	public boolean isUnavaliable() {
+		return serviceNodeSet.isEmpty();
 	}
 }
