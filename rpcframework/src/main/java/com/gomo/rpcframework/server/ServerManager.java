@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.gomo.rpcframework.util.ByteUtil;
 
-class ServerExecute {
+class ServerManager {
 
 	private ServiceHandle serviceHandle = new ServiceHandle();
 
