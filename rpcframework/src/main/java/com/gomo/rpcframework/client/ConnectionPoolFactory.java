@@ -18,9 +18,7 @@ class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 
 	@Override
 	public Connection create() throws Exception {
-		if (isUnavaliable()) {
-			throw new ServiceUnavailableException("service is unavailable, servers is null");
-		}
+		checkFactory();
 		String[] hosts = servers.split(",");
 		String server = hosts[random.nextInt(hosts.length)].trim();
 		String ce[] = server.split(":");
@@ -58,11 +56,9 @@ class ConnectionPoolFactory extends BasePooledObjectFactory<Connection> {
 		}
 	}
 
-	public boolean isUnavaliable() {
+	public void checkFactory() {
 		if (servers == null || "".equals(servers)) {
-			return true;
-		} else {
-			return false;
+			throw new ServiceUnavailableException("service is unavailable, servers is null");
 		}
 	}
 

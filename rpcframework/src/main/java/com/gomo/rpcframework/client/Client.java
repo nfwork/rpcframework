@@ -6,7 +6,6 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import com.gomo.rpcframework.Request;
 import com.gomo.rpcframework.Response;
-import com.gomo.rpcframework.exception.ServiceUnavailableException;
 
 public class Client {
 
@@ -86,9 +85,7 @@ public class Client {
 		if (status != 1) {
 			throw new RuntimeException("client is not init or aready destory");
 		}
-		if (factory.isUnavaliable()) {
-			throw new ServiceUnavailableException("service is unavailable, zkHosts:" + zkHosts + ", zkServiceName:" + zkServiceName);
-		}
+		factory.checkFactory();
 		Connection connection = null;
 		try {
 			connection = pool.borrowObject();
