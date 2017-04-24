@@ -6,14 +6,8 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -30,11 +24,11 @@ public class Server implements Runnable {
 	private int port = 8090;
 	private int minWorkerNum = 10;
 	private int maxWorkerNum = 100;
+	private int ioWorkerNum = 10;
 	private ServerSocketChannel serversocket;
 
 	private Selector selector;
-	private ExecutorService executorService;
-	private ServiceHandle serviceHandle = new ServiceHandle();
+
 	private int status = 0;// 0初始状态 1已初始化 2 已销毁
 
 	private static final String ZK_BASE_PATH = "/rpcframework";
@@ -46,8 +40,10 @@ public class Server implements Runnable {
 	private CuratorFramework client;
 	private PersistentEphemeralNode node;
 
+	private ServerExecute serverExecute = new ServerExecute();
+
 	public void registService(String serviceName, Service service) {
-		serviceHandle.regist(serviceName, service);
+		serverExecute.registService(serviceName, service);
 	}
 
 	/**
@@ -59,8 +55,7 @@ public class Server implements Runnable {
 			if (minWorkerNum > maxWorkerNum) {
 				maxWorkerNum = minWorkerNum;
 			}
-			ThreadFactory factory = new RpcServerThreadFactory(port);
-			executorService = new ThreadPoolExecutor(minWorkerNum, maxWorkerNum, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
+			serverExecute.init(this);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
 			this.serversocket.configureBlocking(false);
@@ -130,29 +125,19 @@ public class Server implements Runnable {
 		}
 
 		try {
+			if (serverExecute != null) {
+				serverExecute.destory();
+			}
+		} catch (Exception e) {
+		}
+
+		try {
 			if (serversocket != null) {
 				serversocket.close();
 			}
 		} catch (Exception e) {
 		}
 
-		if (executorService != null) {
-			executorService.shutdown();
-		}
-
-	}
-
-	/**
-	 * 客户端连接服务器
-	 * 
-	 * @throws IOException
-	 * */
-	public void accept(SelectionKey key) throws IOException {
-		ServerSocketChannel server = (ServerSocketChannel) key.channel();
-		SocketChannel clientchannel = server.accept();
-		clientchannel.configureBlocking(false);
-		ServerReader serverExecute = new ServerReader(serviceHandle);
-		clientchannel.register(this.selector, SelectionKey.OP_READ, serverExecute);
 	}
 
 	public void run() {
@@ -168,7 +153,6 @@ public class Server implements Runnable {
 				break;
 			}
 
-			// 返回此选择器的已选择键集
 			Iterator<SelectionKey> selectorKeys = this.selector.selectedKeys().iterator();
 
 			while (selectorKeys.hasNext()) {
@@ -179,18 +163,14 @@ public class Server implements Runnable {
 						continue;
 					}
 					if (key.isAcceptable()) {
-						this.accept(key);
+						serverExecute.accept(selector, key);
 					} else if (key.isReadable()) {
 						ServerReader serverReader = (ServerReader) key.attachment();
-						serverReader.setKey(key);
-						key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
-						executorService.execute(serverReader);
+						serverExecute.reader(key, serverReader);
 					} else if (key.isWritable()) {
 						ServerReader serverReader = (ServerReader) key.attachment();
-						ServerWriter serverWriter = serverReader.getWriter();
-						serverWriter.setKey(key);
-						key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
-						executorService.execute(serverWriter);
+						ServerWriter serverWriter = serverReader.getServerWriter();
+						serverExecute.writer(key, serverWriter);
 					}
 				} catch (NoDataException e) {
 					closeChannel(key);
@@ -199,7 +179,6 @@ public class Server implements Runnable {
 					RPCLog.error("server runtime excetion", e);
 				}
 			}
-
 		}
 	}
 
@@ -256,6 +235,14 @@ public class Server implements Runnable {
 
 	public void setZkRetryTimes(int zkRetryTimes) {
 		this.zkRetryTimes = zkRetryTimes;
+	}
+
+	public int getIoWorkerNum() {
+		return ioWorkerNum;
+	}
+
+	public void setIoWorkerNum(int ioWorkerNum) {
+		this.ioWorkerNum = ioWorkerNum;
 	}
 
 }
