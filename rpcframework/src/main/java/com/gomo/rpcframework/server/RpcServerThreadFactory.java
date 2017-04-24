@@ -3,15 +3,15 @@ package com.gomo.rpcframework.server;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class RpcIOThreadFactory implements ThreadFactory {
+class RpcServerThreadFactory implements ThreadFactory {
 	private final ThreadGroup group;
 	private final AtomicInteger threadNumber = new AtomicInteger(1);
 	private final String namePrefix;
 
-	RpcIOThreadFactory(int port) {
+	RpcServerThreadFactory(int port) {
 		SecurityManager s = System.getSecurityManager();
 		group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-		namePrefix = "RPCServer-" + port + "-IO-";
+		namePrefix = "RPCServer-" + port + "-Worker-";
 	}
 
 	public Thread newThread(Runnable r) {

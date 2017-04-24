@@ -15,11 +15,13 @@ class ServerReader implements Runnable {
 	private SelectionKey key;
 	private ByteBuffer headerBuf = ByteBuffer.allocate(5);
 	private ByteBuffer contentBuf;
-	private ServerExecute serverExecute;
-	private ServerWriter serverWriter = new ServerWriter(); 
+	private ServerExecute execute;
+	private ServerWriter writer;
 	
-	public ServerReader(ServerExecute serverExecute){
-		this.serverExecute = serverExecute;
+
+	public ServerReader(ServiceHandle serviceHandle) {
+		execute = new ServerExecute(serviceHandle);
+		writer = new ServerWriter();
 	}
 	
 	public void run() {
@@ -62,9 +64,11 @@ class ServerReader implements Runnable {
 						key.selector().wakeup();
 						return;
 					} else {
-						byte[] resByte= contentBuf.array();
-						serverExecute.execute(key, this, resByte);
+						byte[] resByte= execute.execute(contentBuf.array());
+						writer.setResponseByte(resByte);
 						contentBuf = null;
+						key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+						key.selector().wakeup();
 						return;
 					}
 				}
@@ -80,6 +84,7 @@ class ServerReader implements Runnable {
 		}
 	}
 
+
 	public SelectionKey getKey() {
 		return key;
 	}
@@ -88,8 +93,8 @@ class ServerReader implements Runnable {
 		this.key = key;
 	}
 
-	public ServerWriter getServerWriter() {
-		return serverWriter;
+	public ServerWriter getWriter() {
+		return writer;
 	}
 	
 }
