@@ -40,10 +40,10 @@ public class Server implements Runnable {
 	private CuratorFramework client;
 	private PersistentEphemeralNode node;
 
-	private ServerManager serverManager = new ServerManager();
+	private ServerExecute serverExecute = new ServerExecute();
 
 	public void registService(String serviceName, Service service) {
-		serverManager.registService(serviceName, service);
+		serverExecute.registService(serviceName, service);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class Server implements Runnable {
 			if (minWorkerNum > maxWorkerNum) {
 				maxWorkerNum = minWorkerNum;
 			}
-			serverManager.init(this);
+			serverExecute.init(this);
 			this.selector = SelectorProvider.provider().openSelector();
 			this.serversocket = ServerSocketChannel.open();
 			this.serversocket.configureBlocking(false);
@@ -125,8 +125,8 @@ public class Server implements Runnable {
 		}
 
 		try {
-			if (serverManager != null) {
-				serverManager.destory();
+			if (serverExecute != null) {
+				serverExecute.destory();
 			}
 		} catch (Exception e) {
 		}
@@ -163,14 +163,14 @@ public class Server implements Runnable {
 						continue;
 					}
 					if (key.isAcceptable()) {
-						serverManager.accept(selector, key);
+						serverExecute.accept(selector, key);
 					} else if (key.isReadable()) {
 						ServerReader serverReader = (ServerReader) key.attachment();
-						serverManager.reader(key, serverReader);
+						serverExecute.reader(key, serverReader);
 					} else if (key.isWritable()) {
 						ServerReader serverReader = (ServerReader) key.attachment();
 						ServerWriter serverWriter = serverReader.getServerWriter();
-						serverManager.writer(key, serverWriter);
+						serverExecute.writer(key, serverWriter);
 					}
 				} catch (NoDataException e) {
 					closeChannel(key);
