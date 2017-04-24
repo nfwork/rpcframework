@@ -130,14 +130,17 @@ public class Server implements Runnable {
 		}
 
 		try {
-			if (serversocket != null) {
-				serversocket.close();
+			if (executorService != null) {
+				executorService.shutdown();
 			}
 		} catch (Exception e) {
 		}
 
-		if (executorService != null) {
-			executorService.shutdown();
+		try {
+			if (serversocket != null) {
+				serversocket.close();
+			}
+		} catch (Exception e) {
 		}
 
 	}
