@@ -9,11 +9,11 @@ public class ClientTest {
 	public static void main(String[] args) throws Exception {
 
 		Client client = new Client();
-		client.setZkHosts("10.10.1.80:2181");
-		//client.setServers("127.0.0.1:8091");
+		client.setZkHosts("192.168.2.78:2181");
+		//client.setServers("127.0.0.1:8090");
 		client.init();
 
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100000; i++) {
 			try {
 				long begin = System.currentTimeMillis();
 				Request request = new Request();
